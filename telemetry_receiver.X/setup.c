@@ -14,7 +14,7 @@ void init_leds(void){
     TRISC5 = 0; // Set blue LED as output
     LATC5 = 1;
     
-    /*
+    /* // For Keto
     // White LED Setup
     TRISB4 = 0; // Set white LED as output
     ANSELB4 = 0; // Enable digital input buffer

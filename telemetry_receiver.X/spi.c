@@ -4,17 +4,17 @@
 
 void init_spi(void){
     // SPI Module Config Register 0
-    //SPI1CON0 = 0b10000010; // Enable module, MSB data exchange, and set bus master
+    SPI1CON0 = 0b10000010; // Enable module, MSB data exchange, and set bus master
     // SPI Module Config Register 1
-    //SPI1CON1 = 0b00010100; // TODO: write what happens here 
+    SPI1CON1 = 0b00010100; // TODO: write what happens here 
     // SPI Module Config Register 2
-    //SPI1CON2 = 0b00000011; // set to full duplex, TODO: finish writing what happens here
+    SPI1CON2 = 0b00000011; // set to full duplex, TODO: finish writing what happens here
     // SPI Clock Select 
-    //SPI1CLK = 0; // FOSC
+    SPI1CLK = 0; // FOSC
     // SPI Baud Rate
-    //SPI1BAUD = 0;
+    SPI1BAUD = 0;
     // Transfer Counter
-    //SPI1TCNTHbits.BMODE = 1;
+    SPI1TCNTHbits.BMODE = 1;
     
     // SDO pin to output
     TRISC2 = 0;
@@ -26,7 +26,7 @@ void init_spi(void){
     TRISC3 = 0;       
 }
 
-/*
+
 void spi_write_byte(uint8_t byte){
     SPI1TXB = byte;
 }
@@ -46,4 +46,3 @@ uint8_t spi_read_byte(void) {
     }
     return SPI1RXB;
 }
-*/

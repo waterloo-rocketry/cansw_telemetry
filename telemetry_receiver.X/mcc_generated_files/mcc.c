@@ -58,7 +58,7 @@ void SYSTEM_Initialize(void)
 void OSCILLATOR_Initialize(void)
 {
     // SCS FOSC; SPLLMULT 3xPLL; SPLLEN ena; IRCF 16MHz_HF; 
-    OSCCON = 0b11111100;
+    OSCCON = 0x7C;
     // TUN 0; 
     OSCTUNE = 0x00;
     // ACTSRC SOSC; ACTUD enabled; ACTEN disabled; 
@@ -69,10 +69,10 @@ void OSCILLATOR_Initialize(void)
     while(PLLRDY == 0)
     {
     }
-    // Wait for HFIOFR to be ready
-    while(HFIOFR == 0)
-    {
-    }
+////    // Wait for HFIOFR to be ready
+////    while(HFIOFR == 0)
+////    {
+////    }
 }
 
 void WDT_Initialize(void)

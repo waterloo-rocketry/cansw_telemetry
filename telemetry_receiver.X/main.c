@@ -2,11 +2,12 @@
 #include <stdlib.h>
 
 #include "mcc_generated_files/mcc.h"
+#include "mcc_generated_files/device_config.c"
 //#include "spi.h"
 #include "setup.h"
 #include <xc.h>
 
-#define _XTAL_FREQ 48000000
+//#define _XTAL_FREQ 48000000
 
 int main(void)
 {
@@ -27,24 +28,6 @@ int main(void)
         BLUE_LED_ON();
         __delay_ms(1000);
         BLUE_LED_OFF();
-        /*RED = 0;
-        __delay_ms(1000);
-        RED = 1;
-        BLUE = 0;
-        __delay_ms(1000);
-        BLUE = 1;
-        WHITE = 0;
-        __delay_ms(1000);*/
-        
-        /*WHITE_LED_ON();
-        __delay_ms(1000);
-        WHITE_LED_OFF();
-        RED_LED_ON();
-        __delay_ms(1000);
-        RED_LED_OFF();
-        BLUE_LED_ON();
-        __delay_ms(1000);
-        BLUE_LED_OFF();*/
     }
     return 0;
 }
