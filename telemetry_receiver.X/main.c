@@ -2,7 +2,6 @@
 #include <stdlib.h>
 
 #include "mcc_generated_files/mcc.h"
-#include "mcc_generated_files/device_config.c"
 //#include "spi.h"
 #include "setup.h"
 #include <xc.h>
