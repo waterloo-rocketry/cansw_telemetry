@@ -1,21 +1,21 @@
 /**
-  @Generated PIC10 / PIC12 / PIC16 / PIC18 MCUs Header File
+  SPI Generated Driver API Header File
 
-  @Company:
+  @Company
     Microchip Technology Inc.
 
-  @File Name:
-    mcc.h
+  @File Name
+    spi.h
 
-  @Summary:
-    This is the mcc.h file generated using PIC10 / PIC12 / PIC16 / PIC18 MCUs
+  @Summary
+    This is the generated header file for the SPI driver using PIC10 / PIC12 / PIC16 / PIC18 MCUs
 
-  @Description:
-    This header file provides implementations for driver APIs for all modules selected in the GUI.
+  @Description
+    This header file provides APIs for driver for SPI.
     Generation Information :
         Product Revision  :  PIC10 / PIC12 / PIC16 / PIC18 MCUs - 1.81.4
         Device            :  PIC16LF1455
-        Driver Version    :  2.00
+        Driver Version    :  2.0.0
     The generated drivers are tested against the following:
         Compiler          :  XC8 2.20 and above or later
         MPLAB             :  MPLAB X 5.40
@@ -44,58 +44,36 @@
     SOFTWARE.
 */
 
-#ifndef MCC_H
-#define	MCC_H
-#include <xc.h>
-#include "device_config.h"
-#include "pin_manager.h"
+#ifndef SPI_H
+#define SPI_H
+
+/**
+  Section: Included Files
+*/
+
+#include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <conio.h>
-#include "interrupt_manager.h"
-#include "spi.h"
 
+/* SPI interfaces */
+typedef enum { 
+    SPI_DEFAULT
+} spi_modes_t;
 
+typedef void (*spiInterruptHandler_t)(void);
 
-/**
- * @Param
-    none
- * @Returns
-    none
- * @Description
-    Initializes the device to the default states configured in the
- *                  MCC GUI
- * @Example
-    SYSTEM_Initialize(void);
- */
-void SYSTEM_Initialize(void);
+void (*MSSP_InterruptHandler)(void);
 
-/**
- * @Param
-    none
- * @Returns
-    none
- * @Description
-    Initializes the oscillator to the default states configured in the
- *                  MCC GUI
- * @Example
-    OSCILLATOR_Initialize(void);
- */
-void OSCILLATOR_Initialize(void);
-/**
- * @Param
-    none
- * @Returns
-    none
- * @Description
-    Initializes the WDT module to the default states configured in the
- *                  MCC GUI
- * @Example
-    WDT_Initialize(void);
- */
-void WDT_Initialize(void);
+void SPI_Initialize(void);
+bool SPI_Open(spi_modes_t spiUniqueConfiguration);
+void SPI_Close(void);
+uint8_t SPI_ExchangeByte(uint8_t data);
+void SPI_ExchangeBlock(void *block, size_t blockSize);
+void SPI_WriteBlock(void *block, size_t blockSize);
+void SPI_ReadBlock(void *block, size_t blockSize);
+void SPI_WriteByte(uint8_t byte);
+uint8_t SPI_ReadByte(void);
+void SPI_Isr(void);
+void SPI_SetInterruptHandler(spiInterruptHandler_t handler);
 
-#endif	/* MCC_H */
-/**
- End of File
-*/
+#endif //SPI_H

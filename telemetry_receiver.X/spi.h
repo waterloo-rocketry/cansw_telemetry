@@ -11,7 +11,7 @@ extern "C" {
 /*
  * Initialize the SPI module. Set up TX and RX buffers, and set up the module.
  */
-void init_spi(void);
+void spi_init(void);
 
 /*
  * Send a byte over SPI.
@@ -23,7 +23,7 @@ void spi_write_byte(uint8_t data);
  * data: pointer to an array of bytes to send
  * length: the number of bytes that should be sent from that array
  */
-void spi_write_buffer(uint8_t *data, uint8_t length);
+void spi_write_buffer(uint8_t *buffer, size_t length);
 
 /*
  * Receive a byte over SPI.

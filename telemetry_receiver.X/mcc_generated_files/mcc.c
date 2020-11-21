@@ -50,6 +50,7 @@
 void SYSTEM_Initialize(void)
 {
 
+    SPI_Initialize();
     PIN_MANAGER_Initialize();
     OSCILLATOR_Initialize();
     WDT_Initialize();
@@ -57,7 +58,7 @@ void SYSTEM_Initialize(void)
 
 void OSCILLATOR_Initialize(void)
 {
-    // SCS FOSC; SPLLMULT 3xPLL; SPLLEN ena; IRCF 16MHz_HF; 
+    // SCS FOSC; SPLLMULT 3xPLL; SPLLEN disabled; IRCF 16MHz_HF; 
     OSCCON = 0x7C;
     // TUN 0; 
     OSCTUNE = 0x00;
@@ -68,11 +69,7 @@ void OSCILLATOR_Initialize(void)
     // Wait for PLL to stabilize
     while(PLLRDY == 0)
     {
-    }
-////    // Wait for HFIOFR to be ready
-////    while(HFIOFR == 0)
-////    {
-////    }
+}
 }
 
 void WDT_Initialize(void)

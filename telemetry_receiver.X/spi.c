@@ -2,15 +2,16 @@
 #include <stdint.h>
 #include <stdio.h>
 
-void init_spi(void){
+
+void spi_init(void){
     // SSP Status Register
     SSPSTAT = 0b10000000; // select master mode for data input, clock edge select, and buffer full status
     // SSP Config Register 1
-    SSPCON1 =0b00110010; // no buffer overflow, enables serial port, set idle clock state, set master mode
+    SSPCON1 =0b00100010; // no buffer overflow, enables serial port, set idle clock state, set master mode
     // SSP Config Register 2
     SSPCON2 = 0b00000000; // set start/stop condition to idle
     
-    ANSELC &= ~(0x15); // Need to clear relevant ANSELC pins to 0 to use digitally
+    ANSELC &= ~(0xf); // Need to clear relevant ANSELC pins to 0 to use digitally (pins 0-3)
     
     // SDO pin to output
     TRISC2 = 0;
@@ -24,26 +25,36 @@ void init_spi(void){
 
 
 void spi_write_byte(uint8_t byte){
+    // Get any unused contents of the SSPBUF before writing
     uint8_t temp = SSPBUF;
+    // Reset the interrupt flag bit
     PIR1bits.SSP1IF = 0;
+    // Reset write collision detect bit 
     SSPCONbits.WCOL = 0;
+    // Put byte into buffer to be sent
     SSPBUF = byte;
+    // Wait until interrupt flag bit is set (i.e. byte is written)
     while(!PIR1bits.SSP1IF) {};
 }
 
-void spi_write_buffer(uint8_t *data, uint8_t length){
+void spi_write_buffer(uint8_t *buffer, size_t length){ 
+    uint8_t *data = buffer;
     while (length--) {
-        spi_write_byte(*data);
-        data++;
+        spi_write_byte(*data++);
     }
 }
 
 uint8_t spi_read_byte(void) {
-    // Need to read the SSPBUF first
-    uint8_t temp = SSPBUF;
+    // Get contents of the SSPBUF before reading
+    uint8_t temp = SSPBUF;  // TBH I do not remember why this needs to be done
+    // Reset the interrupt flag bit
     PIR1bits.SSP1IF = 0;
-    //clock 0 onto the pins
+    // Reset the buffer
     SSPBUF = 0;
+    // Wait until the interrupt flag bit is set and we've received all data
     while(!PIR1bits.SSP1IF) {}
+    // Return received data
     return SSPBUF;
+    
+    
 }
