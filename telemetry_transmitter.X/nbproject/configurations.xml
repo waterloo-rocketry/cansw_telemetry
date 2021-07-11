@@ -87,6 +87,9 @@
       </logicalFolder>
       <itemPath>setup.h</itemPath>
       <itemPath>spi.h</itemPath>
+      <itemPath>radio.h</itemPath>
+      <itemPath>radio_config.h</itemPath>
+      <itemPath>timer.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -105,6 +108,8 @@
       <itemPath>setup.c</itemPath>
       <itemPath>spi.c</itemPath>
       <itemPath>main.c</itemPath>
+      <itemPath>timer.c</itemPath>
+      <itemPath>radio.c</itemPath>
     </logicalFolder>
     <logicalFolder name="unit_tests" displayName="unit_tests" projectFiles="true">
       <itemPath>unit_tests/test_spi.c</itemPath>
@@ -129,12 +134,14 @@
         <targetPluginBoard></targetPluginBoard>
         <platformTool>PICkit3PlatformTool</platformTool>
         <languageToolchain>XC8</languageToolchain>
-        <languageToolchainVersion>2.05</languageToolchainVersion>
+        <languageToolchainVersion>2.20</languageToolchainVersion>
         <platform>3</platform>
       </toolsSet>
       <packs>
         <pack name="PIC18F-K_DFP" vendor="Microchip" version="1.3.84"/>
       </packs>
+      <ScriptingSettings>
+      </ScriptingSettings>
       <compileType>
         <linkerTool>
           <linkerLibItems>
@@ -166,6 +173,8 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -174,6 +183,8 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -184,6 +195,8 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -194,6 +207,8 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -204,6 +219,8 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -214,6 +231,8 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -224,6 +243,8 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -234,6 +255,8 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -244,6 +267,8 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -254,6 +279,8 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -264,6 +291,8 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -274,6 +303,8 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -284,6 +315,8 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -294,6 +327,8 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -304,6 +339,8 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -314,6 +351,8 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -324,6 +363,8 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -334,6 +375,8 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -342,6 +385,8 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -467,6 +512,9 @@
         <property key="programoptions.uselvpprogramming" value="false"/>
         <property key="voltagevalue" value="3.375"/>
       </PICkit3PlatformTool>
+      <XC8-CO>
+        <property key="coverage-enable" value=""/>
+      </XC8-CO>
       <XC8-config-global>
         <property key="advanced-elf" value="true"/>
         <property key="gcc-opt-driver-new" value="true"/>
@@ -486,6 +534,8 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -494,6 +544,8 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -502,6 +554,8 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -510,6 +564,8 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -518,6 +574,8 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -526,6 +584,8 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -534,6 +594,8 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -542,6 +604,8 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>

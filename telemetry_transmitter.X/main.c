@@ -1,10 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <xc.h>
 #include "mcc_generated_files/mcc.h"
+
 //#include "spi.h"
 #include "setup.h"
-#include <xc.h>
+#include "radio.h"
+#include "radio_config.h"
+#include "timer.h"
 
 #define _XTAL_FREQ 12000000 // 12MHz
 
@@ -14,6 +18,12 @@ int main(void)
     SYSTEM_Initialize();
     init_leds();
     //init_spi();
+    
+    // Enable the Global Interrupts
+    INTCON0.GIE = 1;
+    
+    // init our millisecond function
+    timer0_init();
 
     int msg_counter = 0;
     char transmit_buffer[25];
