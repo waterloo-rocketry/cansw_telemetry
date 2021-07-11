@@ -1,10 +1,6 @@
 #ifndef SPI_H
 #define	SPI_H
 
-#ifdef	__cplusplus
-extern "C" {
-#endif
-
 #include <xc.h>
 #include <stdint.h>
     

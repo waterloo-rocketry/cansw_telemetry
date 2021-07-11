@@ -27,7 +27,7 @@ int main(void)
     while (1)
     {        
         
-        /* // LED Blinking
+        // LED Blinking
         WHITE_LED_ON();
         __delay_ms(1000);
         WHITE_LED_OFF();
@@ -36,7 +36,7 @@ int main(void)
         RED_LED_OFF();
         BLUE_LED_ON();
         __delay_ms(1000);
-        BLUE_LED_OFF();*/
+        BLUE_LED_OFF();
     }
     return 0;
 }
