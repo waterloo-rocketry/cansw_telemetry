@@ -1,3 +1,5 @@
+#include <stdbool.h>
+
 #include "setup.h"
 
 
@@ -28,4 +30,17 @@ void init_leds(void){
     ANSELB2 = 0; // Enable digital input buffer
 
     */
+}
+
+/* Blue LED set to heartbeat. */
+void LED_HEARTBEAT(void)
+{
+    static bool led_on = false;
+    if (led_on) {
+        BLUE_LED_ON();
+        led_on = false;
+    } else {
+        BLUE_LED_OFF();
+        led_on = true;
+    }
 }

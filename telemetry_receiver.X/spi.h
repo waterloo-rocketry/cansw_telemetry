@@ -16,10 +16,10 @@ void spi_write_byte(uint8_t data);
 
 /* Sends multiple bytes of data (from buffer). 
  *
- * data: pointer to an array of bytes to send
+ * buffer: pointer to an array of bytes to send
  * length: the number of bytes that should be sent from that array
  */
-void spi_write_buffer(uint8_t *buffer, size_t length);
+void spi_write_buffer(const uint8_t *buffer, size_t len);
 
 /*
  * Receive a byte over SPI.

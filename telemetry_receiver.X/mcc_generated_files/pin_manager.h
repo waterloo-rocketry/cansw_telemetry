@@ -65,6 +65,12 @@
 #define PULL_UP_ENABLED      1
 #define PULL_UP_DISABLED     0
 
+// get/set RA0 procedures
+#define RA0_GetValue()              PORTAbits.RA0
+
+// get/set RA1 procedures
+#define RA1_GetValue()              PORTAbits.RA1
+
 // get/set RC0 procedures
 #define RC0_SetHigh()            do { LATCbits.LATC0 = 1; } while(0)
 #define RC0_SetLow()             do { LATCbits.LATC0 = 0; } while(0)

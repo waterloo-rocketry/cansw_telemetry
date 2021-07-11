@@ -7,6 +7,18 @@
       <logicalFolder name="MCC Generated Files"
                      displayName="MCC Generated Files"
                      projectFiles="true">
+        <logicalFolder name="usb" displayName="usb" projectFiles="true">
+          <itemPath>mcc_generated_files/usb/usb_ch9.h</itemPath>
+          <itemPath>mcc_generated_files/usb/usb_device.h</itemPath>
+          <itemPath>mcc_generated_files/usb/fixed_address_memory.h</itemPath>
+          <itemPath>mcc_generated_files/usb/usb_hal_pic16f1.h</itemPath>
+          <itemPath>mcc_generated_files/usb/usb_device_local.h</itemPath>
+          <itemPath>mcc_generated_files/usb/usb_device_config.h</itemPath>
+          <itemPath>mcc_generated_files/usb/usb.h</itemPath>
+          <itemPath>mcc_generated_files/usb/usb_device_cdc.h</itemPath>
+          <itemPath>mcc_generated_files/usb/usb_common.h</itemPath>
+          <itemPath>mcc_generated_files/usb/usb_hal.h</itemPath>
+        </logicalFolder>
         <itemPath>mcc_generated_files/device_config.h</itemPath>
         <itemPath>mcc_generated_files/pin_manager.h</itemPath>
         <itemPath>mcc_generated_files/mcc.h</itemPath>
@@ -15,6 +27,11 @@
       </logicalFolder>
       <itemPath>setup.h</itemPath>
       <itemPath>spi.h</itemPath>
+      <itemPath>usb_app.h</itemPath>
+      <itemPath>radio.h</itemPath>
+      <itemPath>radio_config.h</itemPath>
+      <itemPath>interrupts.h</itemPath>
+      <itemPath>timer.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -26,6 +43,13 @@
       <logicalFolder name="MCC Generated Files"
                      displayName="MCC Generated Files"
                      projectFiles="true">
+        <logicalFolder name="usb" displayName="usb" projectFiles="true">
+          <itemPath>mcc_generated_files/usb/example_mcc_usb_cdc.c</itemPath>
+          <itemPath>mcc_generated_files/usb/usb_device_events.c</itemPath>
+          <itemPath>mcc_generated_files/usb/usb_device.c</itemPath>
+          <itemPath>mcc_generated_files/usb/usb_descriptors.c</itemPath>
+          <itemPath>mcc_generated_files/usb/usb_device_cdc.c</itemPath>
+        </logicalFolder>
         <itemPath>mcc_generated_files/device_config.c</itemPath>
         <itemPath>mcc_generated_files/mcc.c</itemPath>
         <itemPath>mcc_generated_files/pin_manager.c</itemPath>
@@ -35,6 +59,10 @@
       <itemPath>main.c</itemPath>
       <itemPath>setup.c</itemPath>
       <itemPath>spi.c</itemPath>
+      <itemPath>usb_app.c</itemPath>
+      <itemPath>radio.c</itemPath>
+      <itemPath>interrupts.c</itemPath>
+      <itemPath>timer.c</itemPath>
     </logicalFolder>
     <logicalFolder name="unit_tests" displayName="unit_tests" projectFiles="true">
       <itemPath>unit_tests/test_spi.c</itemPath>
@@ -57,7 +85,7 @@
         <targetDevice>PIC16LF1455</targetDevice>
         <targetHeader></targetHeader>
         <targetPluginBoard></targetPluginBoard>
-        <platformTool>Simulator</platformTool>
+        <platformTool>PICkit3PlatformTool</platformTool>
         <languageToolchain>XC8</languageToolchain>
         <languageToolchainVersion>2.20</languageToolchainVersion>
         <platform>3</platform>
@@ -176,8 +204,8 @@
         <property key="Freeze Peripherals" value="true"/>
         <property key="SecureSegment.SegmentProgramming" value="FullChipProgramming"/>
         <property key="ToolFirmwareFilePath"
-                  value="Press to browse for a specific firmware version"/>
-        <property key="ToolFirmwareOption.UseLatestFirmware" value="true"/>
+                  value="C:\Program Files (x86)/Microchip/MPLABX/v5.40/mplab_platform/mplablibs/modules/ext/PICKIT3.jar/PK3FW_015607.jam"/>
+        <property key="ToolFirmwareOption.UseLatestFirmware" value="false"/>
         <property key="debugoptions.useswbreakpoints" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="memories.aux" value="false"/>
@@ -237,13 +265,19 @@
         <property key="periphComp6.gte" value="gt"/>
         <property key="reset.scl" value="false"/>
         <property key="reset.type" value="MCLR"/>
-        <property key="toolpack.updateoptions"
-                  value="toolpack.updateoptions.uselatestoolpack"/>
-        <property key="toolpack.updateoptions.packversion"
-                  value="Press to select which tool pack to use"/>
+        <property key="tracecontrol.include.timestamp" value="summarydataenabled"/>
+        <property key="tracecontrol.select" value="0"/>
+        <property key="tracecontrol.stallontracebufferfull" value="false"/>
+        <property key="tracecontrol.timestamp" value="0"/>
+        <property key="tracecontrol.tracebufmax" value="546000"/>
+        <property key="tracecontrol.tracefile" value="defmplabxtrace.log"/>
+        <property key="tracecontrol.traceresetonrun" value="false"/>
         <property key="uart0io.output" value="window"/>
         <property key="uart0io.outputfile" value=""/>
         <property key="uart0io.uartioenabled" value="false"/>
+        <property key="uart10io.output" value="window"/>
+        <property key="uart10io.outputfile" value=""/>
+        <property key="uart10io.uartioenabled" value="false"/>
         <property key="uart1io.output" value="window"/>
         <property key="uart1io.outputfile" value=""/>
         <property key="uart1io.uartioenabled" value="false"/>
@@ -262,48 +296,15 @@
         <property key="uart6io.output" value="window"/>
         <property key="uart6io.outputfile" value=""/>
         <property key="uart6io.uartioenabled" value="false"/>
-        <property key="usart0io.output" value="window"/>
-        <property key="usart0io.outputfile" value=""/>
-        <property key="usart0io.uartioenabled" value="false"/>
-        <property key="usart1io.output" value="window"/>
-        <property key="usart1io.outputfile" value=""/>
-        <property key="usart1io.uartioenabled" value="false"/>
-        <property key="usart2io.output" value="window"/>
-        <property key="usart2io.outputfile" value=""/>
-        <property key="usart2io.uartioenabled" value="false"/>
-        <property key="usart3io.output" value="window"/>
-        <property key="usart3io.outputfile" value=""/>
-        <property key="usart3io.uartioenabled" value="false"/>
-        <property key="usart4io.output" value="window"/>
-        <property key="usart4io.outputfile" value=""/>
-        <property key="usart4io.uartioenabled" value="false"/>
-        <property key="usartc0io.output" value="window"/>
-        <property key="usartc0io.outputfile" value=""/>
-        <property key="usartc0io.uartioenabled" value="false"/>
-        <property key="usartc1io.output" value="window"/>
-        <property key="usartc1io.outputfile" value=""/>
-        <property key="usartc1io.uartioenabled" value="false"/>
-        <property key="usartd0io.output" value="window"/>
-        <property key="usartd0io.outputfile" value=""/>
-        <property key="usartd0io.uartioenabled" value="false"/>
-        <property key="usartd1io.output" value="window"/>
-        <property key="usartd1io.outputfile" value=""/>
-        <property key="usartd1io.uartioenabled" value="false"/>
-        <property key="usarte0io.output" value="window"/>
-        <property key="usarte0io.outputfile" value=""/>
-        <property key="usarte0io.uartioenabled" value="false"/>
-        <property key="usarte1io.output" value="window"/>
-        <property key="usarte1io.outputfile" value=""/>
-        <property key="usarte1io.uartioenabled" value="false"/>
-        <property key="usarte2io.output" value="window"/>
-        <property key="usarte2io.outputfile" value=""/>
-        <property key="usarte2io.uartioenabled" value="false"/>
-        <property key="usartf0io.output" value="window"/>
-        <property key="usartf0io.outputfile" value=""/>
-        <property key="usartf0io.uartioenabled" value="false"/>
-        <property key="usartf1io.output" value="window"/>
-        <property key="usartf1io.outputfile" value=""/>
-        <property key="usartf1io.uartioenabled" value="false"/>
+        <property key="uart7io.output" value="window"/>
+        <property key="uart7io.outputfile" value=""/>
+        <property key="uart7io.uartioenabled" value="false"/>
+        <property key="uart8io.output" value="window"/>
+        <property key="uart8io.outputfile" value=""/>
+        <property key="uart8io.uartioenabled" value="false"/>
+        <property key="uart9io.output" value="window"/>
+        <property key="uart9io.outputfile" value=""/>
+        <property key="uart9io.uartioenabled" value="false"/>
         <property key="warningmessagebreakoptions.W0001_CORE_BITREV_MODULO_EN"
                   value="report"/>
         <property key="warningmessagebreakoptions.W0002_CORE_SECURE_MEMORYACCESS"
@@ -508,10 +509,6 @@
                   value="report"/>
         <property key="warningmessagebreakoptions.W0245_ADC_BUFREGEN_NOT_ALLOWED"
                   value="report"/>
-        <property key="warningmessagebreakoptions.W0246_ADC_ACCUMULATION_BAD_RESSEL"
-                  value="report"/>
-        <property key="warningmessagebreakoptions.W0247_ADC_CONVERSION_BAD_RESSEL"
-                  value="report"/>
         <property key="warningmessagebreakoptions.W0400_PWM_PWM_FASTER_THAN_FOSC"
                   value="report"/>
         <property key="warningmessagebreakoptions.W0600_WDT_2ND_WDT_MR_WRITE"
@@ -612,8 +609,6 @@
                   value="report"/>
         <property key="warningmessagebreakoptions.W8001_OSC_INVALID_CLOCK_SOURCE"
                   value="report"/>
-        <property key="warningmessagebreakoptions.W8002_OSC_RESERVED_FEXTOSC"
-                  value="report"/>
         <property key="warningmessagebreakoptions.W9001_TMR_GATE_AND_EXTCLOCK_ENABLED"
                   value="report"/>
         <property key="warningmessagebreakoptions.W9002_TMR_NO_PIN_AVAILABLE"
@@ -671,9 +666,6 @@
                   value=""/>
         <property key="warningmessagebreakoptions.warningmessages" value="holdstate"/>
       </Simulator>
-      <XC8-CO>
-        <property key="coverage-enable" value=""/>
-      </XC8-CO>
       <XC8-config-global>
         <property key="advanced-elf" value="true"/>
         <property key="gcc-opt-driver-new" value="true"/>
@@ -688,9 +680,67 @@
         <property key="stack-type" value="compiled"/>
         <property key="user-pack-device-support" value=""/>
       </XC8-config-global>
-      <item path="spi.c" ex="true" overriding="false">
+      <item path="mcc_generated_files/spi.c" ex="true" overriding="false">
+        <HI-TECH-COMP>
+        </HI-TECH-COMP>
+        <HI-TECH-LINK>
+        </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
+        <XC8-config-global>
+        </XC8-config-global>
       </item>
-      <item path="spi.h" ex="true" overriding="false">
+      <item path="mcc_generated_files/spi.h" ex="true" overriding="false">
+        <HI-TECH-COMP>
+        </HI-TECH-COMP>
+        <HI-TECH-LINK>
+        </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
+        <XC8-config-global>
+        </XC8-config-global>
+      </item>
+      <item path="mcc_generated_files/usb/example_mcc_usb_cdc.c"
+            ex="true"
+            overriding="false">
+        <HI-TECH-COMP>
+        </HI-TECH-COMP>
+        <HI-TECH-LINK>
+        </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
+        <XC8-config-global>
+        </XC8-config-global>
+      </item>
+      <item path="spi.c" ex="false" overriding="false">
+        <HI-TECH-COMP>
+        </HI-TECH-COMP>
+        <HI-TECH-LINK>
+        </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
+        <XC8-config-global>
+        </XC8-config-global>
+      </item>
+      <item path="spi.h" ex="false" overriding="false">
+        <HI-TECH-COMP>
+        </HI-TECH-COMP>
+        <HI-TECH-LINK>
+        </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
+        <XC8-config-global>
+        </XC8-config-global>
+      </item>
+      <item path="unit_tests/test_spi.c" ex="true" overriding="false">
+        <HI-TECH-COMP>
+        </HI-TECH-COMP>
+        <HI-TECH-LINK>
+        </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
+        <XC8-config-global>
+        </XC8-config-global>
       </item>
     </conf>
   </confs>

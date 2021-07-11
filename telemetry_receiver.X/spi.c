@@ -7,7 +7,7 @@ void spi_init(void){
     // SSP Status Register
     SSPSTAT = 0b10000000; // select master mode for data input, clock edge select, and buffer full status
     // SSP Config Register 1
-    SSPCON1 =0b00100010; // no buffer overflow, enables serial port, set idle clock state, set master mode
+    SSPCON1 = 0b00100010; // no buffer overflow, enables serial port, set idle clock state, set master mode
     // SSP Config Register 2
     SSPCON2 = 0b00000000; // set start/stop condition to idle
     
@@ -25,7 +25,7 @@ void spi_init(void){
 
 
 void spi_write_byte(uint8_t byte){
-    // Get any unused contents of the SSPBUF before writing
+    // Get any unused contents of the SPBUF before writing
     uint8_t temp = SSPBUF;
     // Reset the interrupt flag bit
     PIR1bits.SSP1IF = 0;
@@ -37,9 +37,9 @@ void spi_write_byte(uint8_t byte){
     while(!PIR1bits.SSP1IF) {};
 }
 
-void spi_write_buffer(uint8_t *buffer, size_t length){ 
+void spi_write_buffer(const uint8_t *buffer, size_t len){ 
     uint8_t *data = buffer;
-    while (length--) {
+    while (len--) {
         spi_write_byte(*data++);
     }
 }
@@ -54,7 +54,5 @@ uint8_t spi_read_byte(void) {
     // Wait until the interrupt flag bit is set and we've received all data
     while(!PIR1bits.SSP1IF) {}
     // Return received data
-    return SSPBUF;
-    
-    
+    return SSPBUF;   
 }

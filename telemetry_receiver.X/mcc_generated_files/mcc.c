@@ -45,15 +45,19 @@
 */
 
 #include "mcc.h"
+#include "../spi.h"
 
 
 void SYSTEM_Initialize(void)
 {
 
-    SPI_Initialize();
+//    SPI_Initialize();
+    spi_init();
     PIN_MANAGER_Initialize();
     OSCILLATOR_Initialize();
     WDT_Initialize();
+    USBDeviceInit();
+    USBDeviceAttach();
 }
 
 void OSCILLATOR_Initialize(void)

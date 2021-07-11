@@ -21,7 +21,7 @@
     The generated drivers are tested against the following:
         Compiler          :  XC8 2.20 and above or later
         MPLAB 	          :  MPLAB X 5.40
-*/
+ */
 
 /*
     (c) 2018 Microchip Technology Inc. and its subsidiaries. 
@@ -44,34 +44,37 @@
     CLAIMS IN ANY WAY RELATED TO THIS SOFTWARE WILL NOT EXCEED THE AMOUNT 
     OF FEES, IF ANY, THAT YOU HAVE PAID DIRECTLY TO MICROCHIP FOR THIS 
     SOFTWARE.
-*/
+ */
 
 #include "interrupt_manager.h"
 #include "mcc.h"
+#include "../radio.h"
+#include "../timer.h"
 
-void __interrupt() INTERRUPT_InterruptManager (void)
-{
+void __interrupt() INTERRUPT_InterruptManager(void) {
     // interrupt handler
-    if(INTCONbits.PEIE == 1)
-    {
-        if(PIE2bits.BCL1IE == 1 && PIR2bits.BCL1IF == 1)
-        {
-            MSSP_InterruptHandler();
-        } 
-        else if(PIE1bits.SSP1IE == 1 && PIR1bits.SSP1IF == 1)
-        {
-            MSSP_InterruptHandler();
-        } 
-        else
-        {
+    if (INTCONbits.PEIE == 1) {
+        if (PIE2bits.USBIE == 1 && PIR2bits.USBIF == 1) {
+            USB_USBDeviceTasks();
+//        } else if (PIE2bits.BCL1IE == 1 && PIR2bits.BCL1IF == 1) {
+//            MSSP_InterruptHandler();
+        } else if (PIE1bits.SSP1IE == 1 && PIR1bits.SSP1IF == 1) {
+            // MSSP_InterruptHandler();
+            radio_interrupt_handler();
+            PIR1bits.SSP1IF = 0;
+        } else {
             //Unhandled Interrupt
         }
-    }      
-    else
-    {
+    } else {
         //Unhandled Interrupt
     }
+    // Timer0 has overflowed - update millis() function
+    // This happens approximately every 500us
+    if (INTCONbits.TMR0IE == 1 && INTCONbits.TMR0IF == 1) {
+        timer0_handle_interrupt();
+        INTCONbits.TMR0IF = 0;
+    }
 }
-/**
- End of File
-*/
+    /**
+     End of File
+     */

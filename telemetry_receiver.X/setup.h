@@ -24,5 +24,7 @@
 
 void init_leds(void);
 
+void LED_HEARTBEAT(void);
+
 #endif	/* SETUP_H */
 
