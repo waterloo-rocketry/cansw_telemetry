@@ -21,31 +21,41 @@
 #define MILLIS_REMAINDER 64
 #define MILLIS_INCREMENT_CAP 125
 
- static uint32_t millis_counter = 0;
+static uint32_t millis_counter = 0;
 
- uint32_t millis(void) {
+uint32_t millis(void)
+{
     return millis_counter;
 }
 
-void timer0_init(void) {
-    INTCON0.TMR0IE = 1;    //enable timer 0 interrupt
-    
-    OPTION_REGbits.nWPUEN = 0;  // weak pull-ups are enabled by individual WPUx latch values
-    OPTION_REGbits.INTEDG = 0;  // interrupt on falling edge of INT pin
-    OPTION_REGbits.TMR0CS = 0;  // internal instruction cycle clock (FOSC/4)
-    OPTION_REGbits.TMR0SE = 0;  // increment on low-to-high transition on T0CKI pin
-    OPTION_REGbits.PSA = 0;     // no prescaler
+void timer0_init(void)
+{
+    // disable the module so we can screw with it
+    T0CON0bits.EN = 0;
+    // set timer up to be an 8 bit timer
+    T0CON0bits.MD16 = 0;
+    // set the pre and postscalars to 0. Because I don't know what they do
+    T0CON0bits.OUTPS = 0;
+    T0CON1bits.CKPS = 0;
+    // drive the timer from 500 kHz internal oscillator
+    T0CON1bits.CS = 0x5;
+    T0CON1bits.ASYNC = 0;
+
+    // enable the module
+    T0CON0bits.EN = 1;
 }
 
 /*
  * Based on Bresenham's algorithm and described here: http://romanblack.com/one_sec.htm
  */
-void timer0_handle_interrupt() {
+void timer0_handle_interrupt()
+{
     static uint8_t internal_count = 0;
 
     millis_counter += MILLIS_INCREMENT;
     internal_count += MILLIS_REMAINDER;
-    if (internal_count > MILLIS_INCREMENT_CAP) {
+    if (internal_count > MILLIS_INCREMENT_CAP)
+    {
         internal_count -= MILLIS_INCREMENT_CAP;
         millis_counter++;
     }
