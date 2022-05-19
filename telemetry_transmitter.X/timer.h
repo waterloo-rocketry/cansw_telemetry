@@ -2,15 +2,11 @@
 #define	TIMER_H
 
 #include <stdint.h>
+#include "canlib/pic18f26k83/pic18f26k83_timer.h"
 
-// utilities for handling the timer used in millis()
-void timer0_init(void);
-
-// should be called from the general ISR to increment the timer
-void timer0_handle_interrupt();
-
-// Returns milliseconds since the timer was initialized
-uint32_t millis(void);
+/*
+ * Returns the number of microseconds since we woke up
+ */
+uint32_t micros(void);
 
 #endif	/* TIMER_H */
-

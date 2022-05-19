@@ -1,8 +1,8 @@
 #include "error.h"
 #include "serialize.h"
-#include "can_common.h"
-#include "can_tx_buffer.h"
-#include "pic18_time.h"
+#include "canlib/can_common.h"
+#include "canlib/util/can_tx_buffer.h"
+#include "timer.h"
 
 static char
 err_msg_ring_buf[ERROR_MESSAGE_RING_BUFFER_SIZE][ERROR_COMMAND_LENGTH];

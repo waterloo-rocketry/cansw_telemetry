@@ -1,7 +1,7 @@
 #include "analog.h"
-#include "platform.h"
-#include "pic18_time.h"
-#include "message_types.h"
+#include "setup.h"
+#include "timer.h"
+#include "canlib/message_types.h"
 #include "error.h"
 #include <xc.h>
 

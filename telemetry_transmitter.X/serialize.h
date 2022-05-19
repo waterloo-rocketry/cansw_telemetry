@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "error.h"
-#include "message_types.h"
+#include "canlib/message_types.h"
 
 /*
  * This macro defines how long (in bytes) a string must be in order to

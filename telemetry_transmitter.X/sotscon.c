@@ -1,7 +1,7 @@
 #include "sotscon.h"
-#include "can_common.h"
-#include "message_types.h"
-#include "pic18_time.h"
+#include "canlib/can_common.h"
+#include "canlib/message_types.h"
+#include "timer.h"
 #include "error.h"
 #include "radio_handler.h"
 

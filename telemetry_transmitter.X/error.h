@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h> // For memcpy
-#include "message_types.h"
+#include "canlib/message_types.h"
 
 // how long the char array you pass to get_next_serialized_error needs to be
 #define ERROR_COMMAND_LENGTH 8

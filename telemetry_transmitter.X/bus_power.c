@@ -1,10 +1,10 @@
 #include "bus_power.h"
-#include "can.h"
-#include "pic18f26k83_can.h"
-#include "message_types.h"
-#include "pic18_time.h"
-#include "can_common.h"
-#include "can_tx_buffer.h"
+#include "canlib/can.h"
+#include "canlib/pic18f26k83/pic18f26k83_can.h"
+#include "canlib/message_types.h"
+#include "timer.h"
+#include "canlib/can_common.h"
+#include "canlib/util/can_tx_buffer.h"
 #include <xc.h>
 
 /*

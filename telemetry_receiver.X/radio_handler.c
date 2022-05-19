@@ -2,7 +2,7 @@
 #include "serialize.h"
 #include "sotscon.h"
 #include "uart.h"
-#include "pic18_time.h" // for millis()
+#include "timer.h" // for millis()
 #include "bus_power.h"
 #include <string.h> // for memcpy
 

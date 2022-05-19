@@ -1,7 +1,7 @@
 #ifndef RADIO_HANDLER_H_
 #define RADIO_HANDLER_H_
 
-#include "message_types.h"
+#include "../canlib/message_types.h"
 #include <stdint.h>
 
 /*

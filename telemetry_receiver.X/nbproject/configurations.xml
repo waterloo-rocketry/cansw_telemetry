@@ -26,12 +26,12 @@
         <itemPath>mcc_generated_files/spi.h</itemPath>
       </logicalFolder>
       <itemPath>setup.h</itemPath>
-      <itemPath>spi.h</itemPath>
       <itemPath>usb_app.h</itemPath>
-      <itemPath>radio.h</itemPath>
-      <itemPath>radio_config.h</itemPath>
       <itemPath>interrupts.h</itemPath>
       <itemPath>timer.h</itemPath>
+      <itemPath>radio_handler.h</itemPath>
+      <itemPath>serialize.h</itemPath>
+      <itemPath>uart.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -58,11 +58,12 @@
       </logicalFolder>
       <itemPath>main.c</itemPath>
       <itemPath>setup.c</itemPath>
-      <itemPath>spi.c</itemPath>
       <itemPath>usb_app.c</itemPath>
-      <itemPath>radio.c</itemPath>
       <itemPath>interrupts.c</itemPath>
       <itemPath>timer.c</itemPath>
+      <itemPath>radio_handler.c</itemPath>
+      <itemPath>serialize.c</itemPath>
+      <itemPath>uart.c</itemPath>
     </logicalFolder>
     <logicalFolder name="unit_tests" displayName="unit_tests" projectFiles="true">
       <itemPath>unit_tests/test_spi.c</itemPath>
@@ -87,14 +88,12 @@
         <targetPluginBoard></targetPluginBoard>
         <platformTool>PICkit3PlatformTool</platformTool>
         <languageToolchain>XC8</languageToolchain>
-        <languageToolchainVersion>2.20</languageToolchainVersion>
+        <languageToolchainVersion>2.10</languageToolchainVersion>
         <platform>3</platform>
       </toolsSet>
       <packs>
         <pack name="PIC12-16F1xxx_DFP" vendor="Microchip" version="1.2.63"/>
       </packs>
-      <ScriptingSettings>
-      </ScriptingSettings>
       <compileType>
         <linkerTool>
           <linkerLibItems>
@@ -666,9 +665,6 @@
                   value=""/>
         <property key="warningmessagebreakoptions.warningmessages" value="holdstate"/>
       </Simulator>
-      <XC8-CO>
-        <property key="coverage-enable" value=""/>
-      </XC8-CO>
       <XC8-config-global>
         <property key="advanced-elf" value="true"/>
         <property key="gcc-opt-driver-new" value="true"/>
@@ -688,8 +684,6 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
-        <XC8-CO>
-        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -698,8 +692,6 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
-        <XC8-CO>
-        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -710,28 +702,6 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
-        <XC8-CO>
-        </XC8-CO>
-        <XC8-config-global>
-        </XC8-config-global>
-      </item>
-      <item path="spi.c" ex="false" overriding="false">
-        <HI-TECH-COMP>
-        </HI-TECH-COMP>
-        <HI-TECH-LINK>
-        </HI-TECH-LINK>
-        <XC8-CO>
-        </XC8-CO>
-        <XC8-config-global>
-        </XC8-config-global>
-      </item>
-      <item path="spi.h" ex="false" overriding="false">
-        <HI-TECH-COMP>
-        </HI-TECH-COMP>
-        <HI-TECH-LINK>
-        </HI-TECH-LINK>
-        <XC8-CO>
-        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>
@@ -740,8 +710,6 @@
         </HI-TECH-COMP>
         <HI-TECH-LINK>
         </HI-TECH-LINK>
-        <XC8-CO>
-        </XC8-CO>
         <XC8-config-global>
         </XC8-config-global>
       </item>

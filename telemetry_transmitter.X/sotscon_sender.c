@@ -1,11 +1,11 @@
 #include "sotscon_sender.h"
-#include "message_types.h"
-#include "can_common.h"
-#include "can_tx_buffer.h"
-#include "pic18f26k83_can.h"
+#include "canlib/message_types.h"
+#include "canlib/can_common.h"
+#include "canlib/util/can_tx_buffer.h"
+#include "canlib/pic18f26k83/pic18f26k83_can.h"
 #include "radio_handler.h"
 #include "sotscon.h"
-#include "pic18_time.h"
+#include "timer.h"
 #include "error.h"
 
 /* Private function declarations */

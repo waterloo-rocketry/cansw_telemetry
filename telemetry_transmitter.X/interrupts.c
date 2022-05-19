@@ -1,7 +1,7 @@
 #include "interrupts.h"
 #include "analog.h"
 #include "canlib/pic18f26k83/pic18f26k83_can.h"
-#include "pic18_time.h"
+#include "timer.h"
 #include "uart.h"
 #include <xc.h>
 #include <stdint.h>
