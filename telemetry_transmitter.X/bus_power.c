@@ -104,19 +104,28 @@ bool is_bus_shutting_down(void)
 
 void trigger_bus_shutdown(void)
 {
+    can_msg_t power_down_warning;
     switch (state)
     {
     case BUS_UNPOWERED:
     case BUS_SHUTDOWN: // repeated call, do nothing
         break;
     case BUS_POWERED:
+        state = BUS_SHUTDOWN;
+        time_last_state_transition = millis();
+        
+        build_general_cmd_msg(micros(),
+                              BUS_DOWN_WARNING,
+                              &power_down_warning);
+        txb_enqueue(&power_down_warning);
+        break;
+        
     case BUS_STARTING_UP:
         // in both cases, send the warning message and begin shutdown
         // do not depower the bus, that happens in the heartbeat
         state = BUS_SHUTDOWN;
         time_last_state_transition = millis();
 
-        can_msg_t power_down_warning;
         build_general_cmd_msg(micros(),
                               BUS_DOWN_WARNING,
                               &power_down_warning);
