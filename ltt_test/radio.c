@@ -55,7 +55,7 @@ void radio_handle_input_character(char c) {
             return;
         }
         if (EoM_flag){
-            u_int8_t exp_sum = d; 
+            uint8_t exp_sum = d; 
             if (exp_sum == (sum1 ^ sum2)) txb_enqueue(&msg); //compare checksum b4 send
             parse_i = 0; 
             return; 
