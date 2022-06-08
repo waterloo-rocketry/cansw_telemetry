@@ -15,6 +15,9 @@
 #define BATT_WARNING_MA 3000
 #define BUS_WARNING_MA 900
 
+#define HIGH_SPEED_MSG_DIVIDER 199 //Used to downsample sensor data, MUST BE PRIME
+//lets about 1 in 800 messages of each type through, good if we are running around 1 kHz
+
 static void can_msg_handler(const can_msg_t *msg);
 
 //memory pool for the CAN tx buffer
@@ -153,20 +156,33 @@ int main(void) {
     }
 }
 
+uint8_t high_fq_data_counter = 0;
 static void can_msg_handler(const can_msg_t *msg) {
     if (TXB0CONbits.TXERR) { // If the bus is down we will see tx errors
         return;
     }
-    // Send the message over UART
-    rcvb_push_message(msg);
+    uint16_t msg_type = get_message_type(msg);
+    
+    // A little hacky, but convenient way to filter out the high speed stuff 
+    //(not including altitude cause we need that)
+    if (msg_type >= MSG_SENSOR_ACC && msg_type <= MSG_SENSOR_MAG){
+        //while we want to discard most of the messages, we want to send them once in a while to alow checking that everything is alive
+        // we use a prime number to avoid aliasing ensure that every message gets a chance to be sent
+        if (!(high_fq_data_counter % HIGH_SPEED_MSG_DIVIDER)){
+            rcvb_push_message(msg);
+        }
+        high_fq_data_counter++;
+    }
+    else{
+        // Send the message over UART
+        rcvb_push_message(msg);
+    }
     
     // ignore messages that were sent from this board
     if (get_board_unique_id(msg) == BOARD_UNIQUE_ID) {
         return;
     }
 
-
-    uint16_t msg_type = get_message_type(msg);
     switch (msg_type) {
         case MSG_ACTUATOR_CMD:
             if (get_actuator_id(msg) == CANBUS) {
