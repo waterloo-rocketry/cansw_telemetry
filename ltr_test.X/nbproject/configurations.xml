@@ -30,8 +30,8 @@
         <targetPluginBoard></targetPluginBoard>
         <platformTool>snap</platformTool>
         <languageToolchain>XC16</languageToolchain>
-        <languageToolchainVersion>1.70</languageToolchainVersion>
-        <platform>2</platform>
+        <languageToolchainVersion>2.00</languageToolchainVersion>
+        <platform>3</platform>
       </toolsSet>
       <packs>
         <pack name="PIC24F-GP-GU_DFP" vendor="Microchip" version="1.0.59"/>
