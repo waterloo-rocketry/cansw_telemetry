@@ -154,6 +154,9 @@ int main(void) {
 }
 
 static void can_msg_handler(const can_msg_t *msg) {
+    if (TXB0CONbits.TXERR) { // If the bus is down we will see tx errors
+        return;
+    }
     // Send the message over UART
     rcvb_push_message(msg);
     
@@ -167,7 +170,7 @@ static void can_msg_handler(const can_msg_t *msg) {
     switch (msg_type) {
         case MSG_ACTUATOR_CMD:
             if (get_actuator_id(msg) == CANBUS) {
-                req_bus_powered = get_req_actuator_state(msg) == ACTUATOR_OPEN;
+                req_bus_powered = get_req_actuator_state(msg) == ACTUATOR_CLOSED;
             }
             break;
 
