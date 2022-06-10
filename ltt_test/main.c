@@ -158,9 +158,6 @@ int main(void) {
 
 uint8_t high_fq_data_counter = 0;
 static void can_msg_handler(const can_msg_t *msg) {
-    if (TXB0CONbits.TXERR) { // If the bus is down we will see tx errors
-        return;
-    }
     uint16_t msg_type = get_message_type(msg);
     
     // A little hacky, but convenient way to filter out the high speed stuff 
