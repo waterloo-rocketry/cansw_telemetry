@@ -9,13 +9,13 @@
 
 #define MAX_LOOP_TIME_DIFF_ms 500
 // Time (in multiples of MAX_LOOP_ITME_DIFF_ms) between the bus down warning and power off
-#define CYCLES_TILL_POWER_DOWN 40
+#define CYCLES_TILL_POWER_DOWN 4
 
 #define BATT_WARNING_MV 9500
 #define BATT_WARNING_MA 3000
 #define BUS_WARNING_MA 900
 
-#define HIGH_SPEED_MSG_DIVIDER 199 //Used to downsample sensor data, MUST BE PRIME
+#define HIGH_SPEED_MSG_DIVIDER 23 //Used to downsample sensor data, MUST BE PRIME
 //lets about 1 in 800 messages of each type through, good if we are running around 1 kHz
 
 static void can_msg_handler(const can_msg_t *msg);
@@ -165,10 +165,11 @@ static void can_msg_handler(const can_msg_t *msg) {
     if (msg_type >= MSG_SENSOR_ACC && msg_type <= MSG_SENSOR_MAG){
         //while we want to discard most of the messages, we want to send them once in a while to alow checking that everything is alive
         // we use a prime number to avoid aliasing ensure that every message gets a chance to be sent
-        if (!(high_fq_data_counter % HIGH_SPEED_MSG_DIVIDER)){
+        high_fq_data_counter++;
+        if (high_fq_data_counter >= HIGH_SPEED_MSG_DIVIDER) {
+            high_fq_data_counter = 0;
             rcvb_push_message(msg);
         }
-        high_fq_data_counter++;
     }
     else{
         // Send the message over UART
@@ -179,6 +180,8 @@ static void can_msg_handler(const can_msg_t *msg) {
     if (get_board_unique_id(msg) == BOARD_UNIQUE_ID) {
         return;
     }
+    
+    int dest_id = -1;
 
     switch (msg_type) {
         case MSG_ACTUATOR_CMD:
@@ -197,6 +200,13 @@ static void can_msg_handler(const can_msg_t *msg) {
             RED_LED_SET(false);
             BLUE_LED_SET(false);
             WHITE_LED_SET(false);
+            break;
+        
+        case MSG_RESET_CMD:
+            dest_id = get_reset_board_id(msg);
+            if (dest_id == BOARD_UNIQUE_ID || dest_id == 0 ){
+                RESET();
+            }
             break;
 
         // all the other ones - do nothing
