@@ -8,7 +8,9 @@
 #include "adc.h"
 
 #define MAX_LOOP_TIME_DIFF_ms 500
-// Time (in multiples of MAX_LOOP_ITME_DIFF_ms) between the bus down warning and power off
+#define BUS_DOWN_MAX_LOOP_TIME_DIFF_ms 3000
+#define MAX_SENSOR_TIME_DIFF_ms 5
+// Time (in multiples of MAX_LOOP_TIME_DIFF_ms) between the bus down warning and power off
 #define CYCLES_TILL_POWER_DOWN 4
 
 #define BATT_WARNING_MV 9500
@@ -65,10 +67,11 @@ int main(void) {
 
     // loop timer
     uint32_t last_millis = millis();
+    uint32_t last_sensor_millis = millis();
     
     bool heartbeat = false;
     while (1) {
-        if (millis() - last_millis > MAX_LOOP_TIME_DIFF_ms) {
+        if (millis() - last_millis > (bus_powered ? MAX_LOOP_TIME_DIFF_ms : BUS_DOWN_MAX_LOOP_TIME_DIFF_ms)) {
             // update our loop counter
             last_millis = millis();
 
@@ -78,7 +81,7 @@ int main(void) {
             
             // current and voltage checks
             bool status_ok = true;
-            uint16_t batt_volt = read_batt_volt_mv();
+            uint16_t batt_volt = read_batt_volt_low_pass_mv();
             can_msg_t msg;
             uint8_t data[2] = {0};
             build_analog_data_msg(millis(), SENSOR_ROCKET_BATT, batt_volt, &msg);
@@ -90,7 +93,7 @@ int main(void) {
                 build_board_stat_msg(millis(), E_BATT_UNDER_VOLTAGE, data, 2, &msg);
                 txb_enqueue(&msg);
             }
-            uint16_t batt_curr = read_batt_curr_ma();
+            uint16_t batt_curr = read_batt_curr_low_pass_ma();
             build_analog_data_msg(millis(), SENSOR_BATT_CURR, batt_curr, &msg);
             txb_enqueue(&msg);
             if (batt_curr > BATT_WARNING_MA) {
@@ -100,7 +103,7 @@ int main(void) {
                 build_board_stat_msg(millis(), E_BATT_OVER_CURRENT, data, 2, &msg);
                 txb_enqueue(&msg);
             }
-            uint16_t bus_curr = read_bus_curr_ma();
+            uint16_t bus_curr = read_bus_curr_low_pass_ma();
             build_analog_data_msg(millis(), SENSOR_BUS_CURR, bus_curr, &msg);
             txb_enqueue(&msg);
             if (bus_curr > BUS_WARNING_MA) {
@@ -139,6 +142,10 @@ int main(void) {
             SET_BUS_POWER(bus_powered);
         }
         
+        if (millis() - last_sensor_millis > MAX_SENSOR_TIME_DIFF_ms) {
+            update_sensor_low_pass();
+        }
+        
         while (uart_byte_available())
         {
             radio_handle_input_character(uart_read_byte());
@@ -171,9 +178,12 @@ static void can_msg_handler(const can_msg_t *msg) {
             rcvb_push_message(msg);
         }
     }
-    else{
-        // Send the message over UART
-        rcvb_push_message(msg);
+    else {
+        // Don't send the message over uart if the bus is down and it's not from us
+        if (get_board_unique_id(msg) == BOARD_UNIQUE_ID || bus_powered) {
+            // Send the message over UART
+            rcvb_push_message(msg);
+        }
     }
     
     // ignore messages that were sent from this board
