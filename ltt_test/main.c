@@ -11,7 +11,7 @@
 #define BUS_DOWN_MAX_LOOP_TIME_DIFF_ms 3000
 #define MAX_SENSOR_TIME_DIFF_ms 5
 // Time (in multiples of MAX_LOOP_TIME_DIFF_ms) between the bus down warning and power off
-#define CYCLES_TILL_POWER_DOWN 4
+#define CYCLES_TILL_POWER_DOWN 40
 
 #define BATT_WARNING_MV 9500
 #define BATT_WARNING_MA 3000
