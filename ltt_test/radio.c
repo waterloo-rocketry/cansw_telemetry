@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include "canlib.h"
 #include "uart.h"
+#include <xc.h>
 
 uint8_t hex2num(char ch) {
     if (ch >= '0' && ch <= '9')
@@ -61,8 +62,15 @@ void radio_handle_input_character(char c) {
             return;
         }
         if (EoM_flag){
-            uint8_t exp_sum = d; 
-            if (exp_sum == (sum1 ^ sum2)) txb_enqueue(&msg); //compare checksum b4 send
+            uint8_t exp_sum = d;
+            //compare checksum b4 send
+            if (exp_sum == (sum1 ^ sum2)) {
+                if (get_message_type(&msg) == MSG_RESET_CMD && get_reset_board_id(&msg) == 0) {
+                    //SET_BUS_POWER(false);
+                    RESET();
+                }
+                txb_enqueue(&msg);
+            }
             parse_i = 0;
             return; 
         }

@@ -8,12 +8,17 @@
 #include "adc.h"
 
 #define MAX_LOOP_TIME_DIFF_ms 500
-// Time (in multiples of MAX_LOOP_ITME_DIFF_ms) between the bus down warning and power off
+#define BUS_DOWN_MAX_LOOP_TIME_DIFF_ms 3000
+#define MAX_SENSOR_TIME_DIFF_ms 5
+// Time (in multiples of MAX_LOOP_TIME_DIFF_ms) between the bus down warning and power off
 #define CYCLES_TILL_POWER_DOWN 40
 
 #define BATT_WARNING_MV 9500
 #define BATT_WARNING_MA 3000
 #define BUS_WARNING_MA 900
+
+#define HIGH_SPEED_MSG_DIVIDER 23 //Used to downsample sensor data, MUST BE PRIME
+//lets about 1 in 800 messages of each type through, good if we are running around 1 kHz
 
 static void can_msg_handler(const can_msg_t *msg);
 
@@ -62,10 +67,11 @@ int main(void) {
 
     // loop timer
     uint32_t last_millis = millis();
+    uint32_t last_sensor_millis = millis();
     
     bool heartbeat = false;
     while (1) {
-        if (millis() - last_millis > MAX_LOOP_TIME_DIFF_ms) {
+        if (millis() - last_millis > (bus_powered ? MAX_LOOP_TIME_DIFF_ms : BUS_DOWN_MAX_LOOP_TIME_DIFF_ms)) {
             // update our loop counter
             last_millis = millis();
 
@@ -75,7 +81,7 @@ int main(void) {
             
             // current and voltage checks
             bool status_ok = true;
-            uint16_t batt_volt = read_batt_volt_mv();
+            uint16_t batt_volt = read_batt_volt_low_pass_mv();
             can_msg_t msg;
             uint8_t data[2] = {0};
             build_analog_data_msg(millis(), SENSOR_ROCKET_BATT, batt_volt, &msg);
@@ -87,7 +93,7 @@ int main(void) {
                 build_board_stat_msg(millis(), E_BATT_UNDER_VOLTAGE, data, 2, &msg);
                 txb_enqueue(&msg);
             }
-            uint16_t batt_curr = read_batt_curr_ma();
+            uint16_t batt_curr = read_batt_curr_low_pass_ma();
             build_analog_data_msg(millis(), SENSOR_BATT_CURR, batt_curr, &msg);
             txb_enqueue(&msg);
             if (batt_curr > BATT_WARNING_MA) {
@@ -97,7 +103,7 @@ int main(void) {
                 build_board_stat_msg(millis(), E_BATT_OVER_CURRENT, data, 2, &msg);
                 txb_enqueue(&msg);
             }
-            uint16_t bus_curr = read_bus_curr_ma();
+            uint16_t bus_curr = read_bus_curr_low_pass_ma();
             build_analog_data_msg(millis(), SENSOR_BUS_CURR, bus_curr, &msg);
             txb_enqueue(&msg);
             if (bus_curr > BUS_WARNING_MA) {
@@ -136,6 +142,10 @@ int main(void) {
             SET_BUS_POWER(bus_powered);
         }
         
+        if (millis() - last_sensor_millis > MAX_SENSOR_TIME_DIFF_ms) {
+            update_sensor_low_pass();
+        }
+        
         while (uart_byte_available())
         {
             radio_handle_input_character(uart_read_byte());
@@ -153,20 +163,36 @@ int main(void) {
     }
 }
 
+uint8_t high_fq_data_counter = 0;
 static void can_msg_handler(const can_msg_t *msg) {
-    if (TXB0CONbits.TXERR) { // If the bus is down we will see tx errors
-        return;
+    uint16_t msg_type = get_message_type(msg);
+    
+    // A little hacky, but convenient way to filter out the high speed stuff 
+    //(not including altitude cause we need that)
+    if (msg_type >= MSG_SENSOR_ACC && msg_type <= MSG_SENSOR_MAG){
+        //while we want to discard most of the messages, we want to send them once in a while to alow checking that everything is alive
+        // we use a prime number to avoid aliasing ensure that every message gets a chance to be sent
+        high_fq_data_counter++;
+        if (high_fq_data_counter >= HIGH_SPEED_MSG_DIVIDER) {
+            high_fq_data_counter = 0;
+            rcvb_push_message(msg);
+        }
     }
-    // Send the message over UART
-    rcvb_push_message(msg);
+    else {
+        // Don't send the message over uart if the bus is down and it's not from us
+        if (get_board_unique_id(msg) == BOARD_UNIQUE_ID || bus_powered) {
+            // Send the message over UART
+            rcvb_push_message(msg);
+        }
+    }
     
     // ignore messages that were sent from this board
     if (get_board_unique_id(msg) == BOARD_UNIQUE_ID) {
         return;
     }
+    
+    int dest_id = -1;
 
-
-    uint16_t msg_type = get_message_type(msg);
     switch (msg_type) {
         case MSG_ACTUATOR_CMD:
             if (get_actuator_id(msg) == CANBUS) {
@@ -184,6 +210,13 @@ static void can_msg_handler(const can_msg_t *msg) {
             RED_LED_SET(false);
             BLUE_LED_SET(false);
             WHITE_LED_SET(false);
+            break;
+        
+        case MSG_RESET_CMD:
+            dest_id = get_reset_board_id(msg);
+            if (dest_id == BOARD_UNIQUE_ID || dest_id == 0 ){
+                RESET();
+            }
             break;
 
         // all the other ones - do nothing

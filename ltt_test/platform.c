@@ -34,8 +34,8 @@ void WHITE_LED_SET(bool value) {
 }
 
 void SET_BUS_POWER(bool value) {
-    LATA4 = !value;
-    LATA5 = !value;
-    LATA3 = !value;
+    LATA4 = value;
+    LATA5 = value;
+    LATA3 = value;
     RED_LED_SET(value);
 }

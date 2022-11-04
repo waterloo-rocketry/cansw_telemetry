@@ -8,7 +8,7 @@ void oscillator_init(void)
     //wait until the clock switch has happened
     while (OSCCON3bits.ORDY == 0)  {}
     //if the currently active clock (CON2) isn't the selected clock (CON1)
-    if (OSCCON2 != 0b00100000) {
+    if (OSCCON2 != 0x20) {
         //infinite loop, something is broken, what even is an assert()?
         while (1) {}
     }
