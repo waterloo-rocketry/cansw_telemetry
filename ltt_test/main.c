@@ -8,14 +8,14 @@
 #include "adc.h"
 
 #define MAX_LOOP_TIME_DIFF_ms 500
-#define BUS_DOWN_MAX_LOOP_TIME_DIFF_ms 3000
+////#define BUS_DOWN_MAX_LOOP_TIME_DIFF_ms 3000
 #define MAX_SENSOR_TIME_DIFF_ms 5
 // Time (in multiples of MAX_LOOP_TIME_DIFF_ms) between the bus down warning and power off
 #define CYCLES_TILL_POWER_DOWN 40
 
-#define BATT_WARNING_MV 9500
-#define BATT_WARNING_MA 3000
-#define BUS_WARNING_MA 900
+////#define BATT_WARNING_MV 9500
+////#define BATT_WARNING_MA 3000
+////#define BUS_WARNING_MA 900
 
 #define HIGH_SPEED_MSG_DIVIDER 23 //Used to downsample sensor data, MUST BE PRIME
 //lets about 1 in 800 messages of each type through, good if we are running around 1 kHz
@@ -27,9 +27,9 @@ uint8_t tx_pool[100];
 uint8_t rx_pool[100];
 
 // bus state
-bool bus_powered = true;
-bool req_bus_powered = true;
-uint8_t ticks_until_power_down = 0;
+////bool bus_powered = true;
+////bool req_bus_powered = true;
+////uint8_t ticks_until_power_down = 0;
 
 int main(void) {
     // initialize the external oscillator
@@ -71,7 +71,7 @@ int main(void) {
     
     bool heartbeat = false;
     while (1) {
-        if (millis() - last_millis > (bus_powered ? MAX_LOOP_TIME_DIFF_ms : BUS_DOWN_MAX_LOOP_TIME_DIFF_ms)) {
+        if (millis() - last_millis > MAX_LOOP_TIME_DIFF_ms) {
             // update our loop counter
             last_millis = millis();
 
@@ -80,71 +80,70 @@ int main(void) {
             heartbeat = !heartbeat;
             
             // current and voltage checks
-            bool status_ok = true;
-            uint16_t batt_volt = read_batt_volt_low_pass_mv();
+            // status ok always true
+//            bool status_ok = true;
+            ////uint16_t batt_volt = read_batt_volt_low_pass_mv();
             can_msg_t msg;
-            uint8_t data[2] = {0};
-            build_analog_data_msg(millis(), SENSOR_ROCKET_BATT, batt_volt, &msg);
+//            uint8_t data[2] = {0};
+//            build_analog_data_msg(millis(), SENSOR_ROCKET_BATT, batt_volt, &msg);
+//            txb_enqueue(&msg);
+//            if (batt_volt < BATT_WARNING_MV) {
+//                status_ok = false;
+//                data[0] = (batt_volt >> 8) & 0xff;
+//                data[1] = (batt_volt >> 0) & 0xff;
+//                build_board_stat_msg(millis(), E_BATT_UNDER_VOLTAGE, data, 2, &msg);
+//                txb_enqueue(&msg);
+//            }
+//            uint16_t batt_curr = read_batt_curr_low_pass_ma();
+//            build_analog_data_msg(millis(), SENSOR_BATT_CURR, batt_curr, &msg);
+//            txb_enqueue(&msg);
+//            if (batt_curr > BATT_WARNING_MA) {
+//                status_ok = false;
+//                data[0] = (batt_curr >> 8) & 0xff;
+//                data[1] = (batt_curr >> 0) & 0xff;
+//                build_board_stat_msg(millis(), E_BATT_OVER_CURRENT, data, 2, &msg);
+//                txb_enqueue(&msg);
+//            }
+//            uint16_t bus_curr = read_bus_curr_low_pass_ma();
+//            build_analog_data_msg(millis(), SENSOR_BUS_CURR, bus_curr, &msg);
+//            txb_enqueue(&msg);
+//            if (bus_curr > BUS_WARNING_MA) {
+//                status_ok = false;
+//                data[0] = (bus_curr >> 8) & 0xff;
+//                data[1] = (bus_curr >> 0) & 0xff;
+//                build_board_stat_msg(millis(), E_BUS_OVER_CURRENT, data, 2, &msg);
+//                txb_enqueue(&msg);
+//            }
+            build_board_stat_msg(millis(), E_NOMINAL, NULL, 0, &msg);
             txb_enqueue(&msg);
-            if (batt_volt < BATT_WARNING_MV) {
-                status_ok = false;
-                data[0] = (batt_volt >> 8) & 0xff;
-                data[1] = (batt_volt >> 0) & 0xff;
-                build_board_stat_msg(millis(), E_BATT_UNDER_VOLTAGE, data, 2, &msg);
-                txb_enqueue(&msg);
-            }
-            uint16_t batt_curr = read_batt_curr_low_pass_ma();
-            build_analog_data_msg(millis(), SENSOR_BATT_CURR, batt_curr, &msg);
-            txb_enqueue(&msg);
-            if (batt_curr > BATT_WARNING_MA) {
-                status_ok = false;
-                data[0] = (batt_curr >> 8) & 0xff;
-                data[1] = (batt_curr >> 0) & 0xff;
-                build_board_stat_msg(millis(), E_BATT_OVER_CURRENT, data, 2, &msg);
-                txb_enqueue(&msg);
-            }
-            uint16_t bus_curr = read_bus_curr_low_pass_ma();
-            build_analog_data_msg(millis(), SENSOR_BUS_CURR, bus_curr, &msg);
-            txb_enqueue(&msg);
-            if (bus_curr > BUS_WARNING_MA) {
-                status_ok = false;
-                data[0] = (bus_curr >> 8) & 0xff;
-                data[1] = (bus_curr >> 0) & 0xff;
-                build_board_stat_msg(millis(), E_BUS_OVER_CURRENT, data, 2, &msg);
-                txb_enqueue(&msg);
-            }
-            if (status_ok) {
-                build_board_stat_msg(millis(), E_NOMINAL, NULL, 0, &msg);
-                txb_enqueue(&msg);
-            }
             
-            // control bus power
-            // first check if we just got asked to power down (ticks_until idles at zero)
-            if (bus_powered && !req_bus_powered && ticks_until_power_down == 0) {
-                // If so, send the power down warning and then start our countdown to power off
-                can_msg_t msg;
-                build_general_cmd_msg(millis(), BUS_DOWN_WARNING, &msg);
-                txb_enqueue(&msg);
-                ticks_until_power_down = CYCLES_TILL_POWER_DOWN;
-            } else if (bus_powered && !req_bus_powered && ticks_until_power_down > 0) {
-                // If we are currently counting down to a power off, keep counting
-                ticks_until_power_down--;
-                // and actually shut off power if we are done counting
-                if (ticks_until_power_down == 0) {
-                    bus_powered = false;
-                }
-            } else if (req_bus_powered) {
-                // If we get were last asked to turn on just do it. Yes this will get called
-                // every iteration we are powered, no it doesn't matter.
-                bus_powered = true;
-                ticks_until_power_down = 0;
-            }
-            SET_BUS_POWER(bus_powered);
+//            // control bus power
+//            // first check if we just got asked to power down (ticks_until idles at zero)
+//            if (bus_powered && !req_bus_powered && ticks_until_power_down == 0) {
+//                // If so, send the power down warning and then start our countdown to power off
+//                can_msg_t msg;
+//                build_general_cmd_msg(millis(), BUS_DOWN_WARNING, &msg);
+//                txb_enqueue(&msg);
+//                ticks_until_power_down = CYCLES_TILL_POWER_DOWN;
+//            } else if (bus_powered && !req_bus_powered && ticks_until_power_down > 0) {
+//                // If we are currently counting down to a power off, keep counting
+//                ticks_until_power_down--;
+//                // and actually shut off power if we are done counting
+//                if (ticks_until_power_down == 0) {
+//                    bus_powered = false;
+//                }
+//            } else if (req_bus_powered) {
+//                // If we get were last asked to turn on just do it. Yes this will get called
+//                // every iteration we are powered, no it doesn't matter.
+//                bus_powered = true;
+//                ticks_until_power_down = 0;
+//            }
+//            SET_BUS_POWER(bus_powered);
         }
         
-        if (millis() - last_sensor_millis > MAX_SENSOR_TIME_DIFF_ms) {
-            update_sensor_low_pass();
-        }
+//        if (millis() - last_sensor_millis > MAX_SENSOR_TIME_DIFF_ms) {
+//            update_sensor_low_pass();     // looks like it is a function regarding bus and batt
+//        }
         
         while (uart_byte_available())
         {
@@ -180,7 +179,7 @@ static void can_msg_handler(const can_msg_t *msg) {
     }
     else {
         // Don't send the message over uart if the bus is down and it's not from us
-        if (get_board_unique_id(msg) == BOARD_UNIQUE_ID || bus_powered) {
+        if (get_board_unique_id(msg) == BOARD_UNIQUE_ID) {
             // Send the message over UART
             rcvb_push_message(msg);
         }
@@ -194,11 +193,11 @@ static void can_msg_handler(const can_msg_t *msg) {
     int dest_id = -1;
 
     switch (msg_type) {
-        case MSG_ACTUATOR_CMD:
-            if (get_actuator_id(msg) == CANBUS) {
-                req_bus_powered = get_req_actuator_state(msg) == ACTUATOR_CLOSED;
-            }
-            break;
+//        case MSG_ACTUATOR_CMD:
+//            if (get_actuator_id(msg) == CANBUS) {
+//                req_bus_powered = get_req_actuator_state(msg) == ACTUATOR_CLOSED;
+//            }
+//            break;
 
         case MSG_LEDS_ON:
             RED_LED_SET(true);
