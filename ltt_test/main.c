@@ -87,12 +87,12 @@ int main(void) {
             uint8_t data[2] = {0};
 
             uint16_t radio_curr = read_radio_curr_low_pass_ma();
-            build_analog_data_msg(millis(), SENSOR_BATT_CURR, radio_curr, &msg);
+            build_analog_data_msg(millis(), SENSOR_RADIO_CURR, radio_curr, &msg);
             txb_enqueue(&msg);
 
-            uint16_t bus_curr = read_bus_curr_low_pass_ma();
-            build_analog_data_msg(millis(), SENSOR_BUS_CURR, bus_curr, &msg);
-            txb_enqueue(&msg);
+//            uint16_t bus_curr = read_bus_curr_low_pass_ma();
+//            build_analog_data_msg(millis(), SENSOR_BUS_CURR, bus_curr, &msg);
+//            txb_enqueue(&msg);
             
             build_board_stat_msg(millis(), E_NOMINAL, NULL, 0, &msg);
             txb_enqueue(&msg);
