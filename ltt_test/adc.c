@@ -2,7 +2,7 @@
 #include <xc.h>
 
 void adc_init() {
-    ANSELA = 0b00000111;
+    ANSELA = 0b1000;
     ANSELB = 0;
     ANSELC = 0;
 
@@ -37,8 +37,8 @@ uint16_t read_bus_curr_ma() {
     return read_adc_mv(0) / 2; // 100 V/V amplification, 20mR sense
 }
 
-uint16_t read_batt_curr_ma() {
-    return read_adc_mv(1) / 2; // 100 V/V amplification, 20mR sense
+uint16_t read_radio_curr_ma() {
+    return read_adc_mv(4) / 2; // 100 V/V amplification, 20mR sense
 }
 
 uint16_t read_batt_volt_mv() {
@@ -55,14 +55,14 @@ uint16_t read_batt_volt_mv() {
 #define LOW_PASS_RESPONSE_TIME 5  //seconds
 double alpha_low = LOW_PASS_ALPHA(LOW_PASS_RESPONSE_TIME);
 double low_pass_bus_curr_ma = 0;
-double low_pass_batt_curr_ma = 0;
+double low_pass_radio_curr_ma = 0;
 double low_pass_batt_volt_mv = 0;
 void update_sensor_low_pass(void) {
     uint16_t new_bus_curr = read_bus_curr_ma();
     low_pass_bus_curr_ma = alpha_low*low_pass_bus_curr_ma + (1.0 - alpha_low)*new_bus_curr;
     
-    uint16_t new_batt_curr = read_batt_curr_ma();
-    low_pass_batt_curr_ma = alpha_low*low_pass_batt_curr_ma + (1.0 - alpha_low)*new_batt_curr;
+    uint16_t new_radio_curr = read_radio_curr_ma();
+    low_pass_radio_curr_ma = alpha_low*low_pass_radio_curr_ma + (1.0 - alpha_low)*new_radio_curr;
     
     uint16_t new_batt_volt = read_batt_volt_mv();
     low_pass_batt_volt_mv = alpha_low*low_pass_batt_volt_mv + (1.0 - alpha_low)*new_batt_volt;
@@ -72,8 +72,8 @@ uint16_t read_bus_curr_low_pass_ma() {
     return low_pass_bus_curr_ma;
 }
 
-uint16_t read_batt_curr_low_pass_ma() {
-    return low_pass_batt_curr_ma;
+uint16_t read_radio_curr_low_pass_ma() {
+    return low_pass_radio_curr_ma;
 }
 
 uint16_t read_batt_volt_low_pass_mv() {
