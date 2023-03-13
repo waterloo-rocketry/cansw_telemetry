@@ -8,7 +8,7 @@
 #include "adc.h"
 
 #define MAX_LOOP_TIME_DIFF_ms 500
-////#define BUS_DOWN_MAX_LOOP_TIME_DIFF_ms 3000
+#define BUS_DOWN_MAX_LOOP_TIME_DIFF_ms 3000
 #define MAX_SENSOR_TIME_DIFF_ms 5
 // Time (in multiples of MAX_LOOP_TIME_DIFF_ms) between the bus down warning and power off
 #define CYCLES_TILL_POWER_DOWN 40
@@ -27,9 +27,9 @@ uint8_t tx_pool[100];
 uint8_t rx_pool[100];
 
 // bus state
-////bool bus_powered = true;
-////bool req_bus_powered = true;
-////uint8_t ticks_until_power_down = 0;
+bool bus_powered = true;
+bool req_bus_powered = true;
+uint8_t ticks_until_power_down = 0;
 
 int main(void) {
     // initialize the external oscillator
@@ -44,7 +44,10 @@ int main(void) {
     uart_init();
     
     adc_init();
-
+    
+    // power on radio
+    SET_RADIO_POWER(1);
+    
     // Enable global interrupts
     INTCON0bits.GIE = 1;
 
@@ -71,7 +74,7 @@ int main(void) {
     
     bool heartbeat = false;
     while (1) {
-        if (millis() - last_millis > MAX_LOOP_TIME_DIFF_ms) {
+        if (millis() - last_millis > (bus_powered ? MAX_LOOP_TIME_DIFF_ms : BUS_DOWN_MAX_LOOP_TIME_DIFF_ms)) {
             // update our loop counter
             last_millis = millis();
 
@@ -79,41 +82,18 @@ int main(void) {
             BLUE_LED_SET(heartbeat);
             heartbeat = !heartbeat;
             
-            // current and voltage checks
-            // status ok always true
-//            bool status_ok = true;
-            ////uint16_t batt_volt = read_batt_volt_low_pass_mv();
+            // current checks
             can_msg_t msg;
-//            uint8_t data[2] = {0};
-//            build_analog_data_msg(millis(), SENSOR_ROCKET_BATT, batt_volt, &msg);
-//            txb_enqueue(&msg);
-//            if (batt_volt < BATT_WARNING_MV) {
-//                status_ok = false;
-//                data[0] = (batt_volt >> 8) & 0xff;
-//                data[1] = (batt_volt >> 0) & 0xff;
-//                build_board_stat_msg(millis(), E_BATT_UNDER_VOLTAGE, data, 2, &msg);
-//                txb_enqueue(&msg);
-//            }
-//            uint16_t batt_curr = read_batt_curr_low_pass_ma();
-//            build_analog_data_msg(millis(), SENSOR_BATT_CURR, batt_curr, &msg);
-//            txb_enqueue(&msg);
-//            if (batt_curr > BATT_WARNING_MA) {
-//                status_ok = false;
-//                data[0] = (batt_curr >> 8) & 0xff;
-//                data[1] = (batt_curr >> 0) & 0xff;
-//                build_board_stat_msg(millis(), E_BATT_OVER_CURRENT, data, 2, &msg);
-//                txb_enqueue(&msg);
-//            }
-//            uint16_t bus_curr = read_bus_curr_low_pass_ma();
-//            build_analog_data_msg(millis(), SENSOR_BUS_CURR, bus_curr, &msg);
-//            txb_enqueue(&msg);
-//            if (bus_curr > BUS_WARNING_MA) {
-//                status_ok = false;
-//                data[0] = (bus_curr >> 8) & 0xff;
-//                data[1] = (bus_curr >> 0) & 0xff;
-//                build_board_stat_msg(millis(), E_BUS_OVER_CURRENT, data, 2, &msg);
-//                txb_enqueue(&msg);
-//            }
+            uint8_t data[2] = {0};
+
+            uint16_t radio_curr = read_radio_curr_low_pass_ma();
+            build_analog_data_msg(millis(), SENSOR_BATT_CURR, radio_curr, &msg);
+            txb_enqueue(&msg);
+
+            uint16_t bus_curr = read_bus_curr_low_pass_ma();
+            build_analog_data_msg(millis(), SENSOR_BUS_CURR, bus_curr, &msg);
+            txb_enqueue(&msg);
+            
             build_board_stat_msg(millis(), E_NOMINAL, NULL, 0, &msg);
             txb_enqueue(&msg);
             
