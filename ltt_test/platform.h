@@ -9,7 +9,7 @@ void RED_LED_SET(bool value);
 void BLUE_LED_SET(bool value);
 void WHITE_LED_SET(bool value);
 
-void SET_RADIO_POWER(bool value);
+void SET_BUS_POWER(bool value);
 
 #endif	/* BOARD_H */
 
