@@ -16,6 +16,7 @@ void gpio_init(void) {
     
     TRISA4 = 1;
     // initially power off radio
+    TRISC4 = 0; // LED
     LATC4 = 0;
 }
 
