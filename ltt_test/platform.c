@@ -14,9 +14,10 @@ void gpio_init(void) {
     LATC6 = !LED_ON;
     LATC7 = !LED_ON;
     
+    // current sense input
     TRISA4 = 1;
     // initially power off radio
-    TRISC4 = 0; // LED
+    TRISC4 = 0;
     LATC4 = 0;
 }
 
