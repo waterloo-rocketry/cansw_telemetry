@@ -67,6 +67,8 @@ int main(void) {
     uint32_t last_sensor_millis = millis();
 
     bool heartbeat = false;
+    WHITE_LED_SET(1);
+    WHITE_LED_SET(0);
     while (1) {
         if (millis() - last_millis > (bus_powered ? MAX_LOOP_TIME_DIFF_ms : BUS_DOWN_MAX_LOOP_TIME_DIFF_ms)) {
             // update our loop counter
@@ -104,6 +106,9 @@ int main(void) {
 
         //send any queued CAN messages
         txb_heartbeat();
+        
+        // clear watchdog timer
+        CLRWDT();
     }
 }
 

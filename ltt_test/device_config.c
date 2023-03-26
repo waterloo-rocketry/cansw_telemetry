@@ -45,7 +45,7 @@ void oscillator_init(void)
 
 // CONFIG3L
 #pragma config WDTCPS = WDTCPS_31    // WDT Period selection bits->Divider ratio 1:65536; software control of WDTPS
-#pragma config WDTE = OFF    // WDT operating mode->WDT Disabled; SWDTEN is ignored
+#pragma config WDTE = ON    // WDT operating mode->WDT enabled regardless of sleep
 
 // CONFIG3H
 #pragma config WDTCWS = WDTCWS_7    // WDT Window Select bits->window always open (100%); software control; keyed access not required
