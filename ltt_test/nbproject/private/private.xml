@@ -5,6 +5,7 @@
         <group>
             <file>file:/C:/Users/AAAAA/Desktop/cansw_telemetry/ltt_test/adc.h</file>
             <file>file:/C:/Users/AAAAA/Desktop/cansw_telemetry/ltt_test/canlib/can.h</file>
+            <file>file:/C:/Users/AAAAA/Desktop/cansw_telemetry/ltt_test/radio.h</file>
             <file>file:/C:/Users/AAAAA/Desktop/cansw_telemetry/ltt_test/canlib/message_types.h</file>
             <file>file:/C:/Users/AAAAA/Desktop/cansw_telemetry/ltt_test/adc.c</file>
             <file>file:/C:/Users/AAAAA/Desktop/cansw_telemetry/ltt_test/canlib/pic18f26k83/pic18f26k83_timer.c</file>

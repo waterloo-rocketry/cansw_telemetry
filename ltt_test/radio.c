@@ -36,8 +36,8 @@ uint8_t hex2num(char ch) {
 void radio_handle_input_character(char c) {
     static uint8_t parse_i = 0;
     static can_msg_t msg;
-    static uint8_t crc_read1 = 0;
-    static uint8_t crc_read2 = 0;
+    static uint8_t crc_read1 = 0;   // read the first hex of the parity byte
+    static uint8_t crc_read2 = 0;   // read the second hex of the parity byte
     static uint8_t exp_crc;
     if (parse_i == 0) { // expecting the start of a new message
         if (c == 'm' || c == 'M') {
@@ -69,7 +69,7 @@ void radio_handle_input_character(char c) {
             crc_read1 = 1;
         }
         // either the message ended or it was an invalid character, either way reset
-        parse_i++; // go to the if (EoM_flag) below next parse 
+        parse_i++; // go to the if (crc_read1) below next parse 
         return;
     } else { // hex data chars
         uint8_t d = hex2num(c);
