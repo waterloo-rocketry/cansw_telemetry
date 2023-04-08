@@ -67,8 +67,7 @@ int main(void) {
     uint32_t last_sensor_millis = millis();
 
     bool heartbeat = false;
-    WHITE_LED_SET(1);
-    WHITE_LED_SET(0);
+
     while (1) {
         if (millis() - last_millis > (bus_powered ? MAX_LOOP_TIME_DIFF_ms : BUS_DOWN_MAX_LOOP_TIME_DIFF_ms)) {
             // update our loop counter
@@ -84,10 +83,10 @@ int main(void) {
 
             uint16_t radio_curr = read_radio_curr_ma();
             build_analog_data_msg(millis(), SENSOR_RADIO_CURR, radio_curr, &msg);
-            txb_enqueue(&msg);
+            //txb_enqueue(&msg);
 
             build_board_stat_msg(millis(), E_NOMINAL, NULL, 0, &msg);
-            txb_enqueue(&msg);
+            //txb_enqueue(&msg);
         }
 
         if (millis() - last_sensor_millis > MAX_SENSOR_TIME_DIFF_ms) {
@@ -128,11 +127,7 @@ static void can_msg_handler(const can_msg_t *msg) {
             rcvb_push_message(msg);
         }
     } else {
-        // Don't send the message over uart if the bus is down and it's not from us
-        if (get_board_unique_id(msg) == BOARD_UNIQUE_ID) {
-            // Send the message over UART
-            rcvb_push_message(msg);
-        }
+        rcvb_push_message(msg);
     }
 
     // ignore messages that were sent from this board
