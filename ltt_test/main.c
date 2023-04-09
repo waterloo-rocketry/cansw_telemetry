@@ -22,9 +22,6 @@ static void can_msg_handler(const can_msg_t *msg);
 uint8_t tx_pool[100];
 uint8_t rx_pool[100];
 
-// bus state
-bool bus_powered = true;
-
 int main(void) {
     // initialize the external oscillator
     oscillator_init();
@@ -69,7 +66,7 @@ int main(void) {
     bool heartbeat = false;
 
     while (1) {
-        if (millis() - last_millis > (bus_powered ? MAX_LOOP_TIME_DIFF_ms : BUS_DOWN_MAX_LOOP_TIME_DIFF_ms)) {
+        if (millis() - last_millis > MAX_LOOP_TIME_DIFF_ms) {
             // update our loop counter
             last_millis = millis();
 
@@ -83,10 +80,10 @@ int main(void) {
 
             uint16_t radio_curr = read_radio_curr_ma();
             build_analog_data_msg(millis(), SENSOR_RADIO_CURR, radio_curr, &msg);
-            //txb_enqueue(&msg);
+            txb_enqueue(&msg);
 
             build_board_stat_msg(millis(), E_NOMINAL, NULL, 0, &msg);
-            //txb_enqueue(&msg);
+            txb_enqueue(&msg);
         }
 
         if (millis() - last_sensor_millis > MAX_SENSOR_TIME_DIFF_ms) {
