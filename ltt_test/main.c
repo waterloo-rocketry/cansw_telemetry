@@ -10,8 +10,8 @@
 #define MAX_LOOP_TIME_DIFF_ms 500
 #define BUS_DOWN_MAX_LOOP_TIME_DIFF_ms 3000
 #define MAX_SENSOR_TIME_DIFF_ms 5
-// Time (in multiples of MAX_LOOP_TIME_DIFF_ms) between the bus down warning and power off
-#define CYCLES_TILL_POWER_DOWN 40
+// reset radio, 1 minute after the last message received from radio
+#define RESET_RADIO_ms 60000
 
 #define HIGH_SPEED_MSG_DIVIDER 23 //Used to downsample sensor data, MUST BE PRIME
 //lets about 1 in 800 messages of each type through, good if we are running around 1 kHz
@@ -62,6 +62,7 @@ int main(void) {
     // loop timer
     uint32_t last_millis = millis();
     uint32_t last_sensor_millis = millis();
+    uint32_t last_message_millis = millis();
 
     bool heartbeat = false;
 
@@ -92,6 +93,7 @@ int main(void) {
 
         while (uart_byte_available()) {
             radio_handle_input_character(uart_read_byte());
+            last_message_millis = millis();
         }
 
         if (!rcvb_is_empty()) {
@@ -105,6 +107,15 @@ int main(void) {
         
         // clear watchdog timer
         CLRWDT();
+        
+        // reset radio if no message received for over 1 minute
+        if (millis() - last_message_millis > RESET_RADIO_ms){
+            // reset radio
+            SET_RADIO_POWER(0);
+            while ((millis() - last_message_millis) < (50 + RESET_RADIO_ms));    // wait for 50 ms
+            SET_RADIO_POWER(1);
+            last_message_millis = millis();
+        }
     }
 }
 
