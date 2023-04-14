@@ -25,7 +25,7 @@ uint8_t table[256] = {
 };
 
 uint8_t crc8_checksum(uint8_t *pdata, size_t nbytes, uint8_t crc) {
-    while(nbytes > 0) {
+    while (nbytes > 0) {
         crc = table[(crc ^ *pdata++) & 0xff];
         --nbytes;
     }
@@ -44,16 +44,14 @@ uint8_t hex2num(char ch) {
 
 void radio_handle_input_character(char c) {
     static uint8_t parse_i = 0;
+    static uint8_t crc_i = 0;
     static can_msg_t msg;
-    static uint8_t crc_read1 = 0; // read the first hex of the parity byte
-    static uint8_t crc_read2 = 0; // read the second hex of the parity byte
-    static uint8_t exp_crc;
+    static uint8_t EoM_flag = 0;
     if (parse_i == 0) { // expecting the start of a new message
         if (c == 'm' || c == 'M') {
             msg.sid = 0;
             msg.data_len = 0;
-            crc_read1 = 0;
-            crc_read2 = 0;
+            crc_i = 0;
             parse_i++;
         } else {
         } // ignore unknown character
@@ -64,7 +62,7 @@ void radio_handle_input_character(char c) {
             parse_i = 0;
             return;
         }
-        msg.sid |= (uint16_t) d << ((3 - parse_i) * 4);
+        msg.sid |= (uint16_t) (d << ((3 - parse_i) * 4));
         parse_i++;
         return;
     } else if (parse_i % 3 == 1) { // We expect a comma or a semicolon
@@ -75,46 +73,44 @@ void radio_handle_input_character(char c) {
             return;
         }
         if (c == ';') { // end of message
-            crc_read1 = 1;
+            EoM_flag = 1;
+            return;
         }
         // either the message ended or it was an invalid character, either way reset
-        parse_i++; // go to the if (crc_read1) below next parse 
+        parse_i++; // go to the if (EoM_flag) below next parse 
         return;
     } else { // hex data chars
         uint8_t d = hex2num(c);
         if (d == 255) { // invalid character
             parse_i = 0;
-            crc_read1 = 0;
-            crc_read2 = 0;
+            EoM_flag = 0;
             return;
         }
-        if (crc_read1) {
-            exp_crc = d;
-            crc_read1 = 0;
-            crc_read2 = 1;
-            return;
-        }
-        if (crc_read2) {
-            exp_crc = ((exp_crc << 4) & 0xf0) | (d & 0xf); // is it?
-
-            uint8_t sid_arr[2];
-            sid_arr[0] = (msg.sid) >> 8;
-            sid_arr[1] = (msg.sid) & 0xff;
-            uint8_t crc = crc8_checksum(sid_arr, sizeof (sid_arr), 0x00);
-            crc = crc8_checksum(msg.data, msg.data_len, crc);
-
-            //compare expect crc with calculated
-            if (exp_crc == crc) {
-                if (get_message_type(&msg) == MSG_RESET_CMD && get_reset_board_id(&msg) == 0) {
-                    //SET_BUS_POWER(false);
-                    RESET();
-                }
-                txb_enqueue(&msg);
+        if (EoM_flag) {
+            static uint8_t exp_crc;
+            if (crc_i == 0) {
+                exp_crc = d;
+                crc_i++;
             }
-            parse_i = 0;
+            if (crc_i == 1) {
+                exp_crc = (exp_crc << 4) | d;
+                
+                uint8_t crc  = table[(0x00 ^ ((msg.sid) >> 8)) & 0xff]; // sid 1st byte
+                crc  = table[(crc ^ ((msg.sid) & 0xff)) & 0xff];               // sid 2nd byte
+                crc = crc8_checksum(msg.data, msg.data_len, crc);
+
+                //compare expect crc with calculated
+                if (exp_crc == crc) {
+                    if (get_message_type(&msg) == MSG_RESET_CMD && get_reset_board_id(&msg) == 0) {
+                        //SET_BUS_POWER(false);
+                        RESET();
+                    }
+                    txb_enqueue(&msg);
+                }
+                parse_i = 0;
+            }
             return;
         }
-
         // parse_i % 3 == 2 for the first nibble and 0 for the second, so just double it
         msg.data[msg.data_len - 1] |= d << ((parse_i % 3) * 2);
         parse_i++;
@@ -153,11 +149,9 @@ void serialize_can_msg(can_msg_t *msg) {
     temp_buffer[3 * i + 4] = ';'; // Delimit for checksum
 
     // calculate crc8
-    uint8_t sid_arr[2];
-    sid_arr[0] = (msg->sid) >> 8;
-    sid_arr[1] = (msg->sid) & 0xff;
-    uint8_t crc = crc8_checksum(sid_arr, sizeof (sid_arr), 0x00);
-    crc = crc8_checksum(msg->data, i, crc);
+    uint8_t crc  = table[(0x00 ^ ((msg->sid) >> 8)) & 0xff]; // sid 1st byte
+    crc  = table[(crc ^ ((msg->sid) & 0xff)) & 0xff];               // sid 2nd byte
+    crc = crc8_checksum(msg->data, msg->data_len, crc);
 
     temp_buffer[3 * i + 5] = hex_lookup_table[(crc >> 4)];
     temp_buffer[3 * i + 6] = hex_lookup_table[(crc & 0xf)];
