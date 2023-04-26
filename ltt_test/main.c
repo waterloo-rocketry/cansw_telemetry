@@ -22,6 +22,8 @@ static void can_msg_handler(const can_msg_t *msg);
 uint8_t tx_pool[100];
 uint8_t rx_pool[100];
 
+bool reboot_radio = false;
+
 int main(void) {
     // initialize the external oscillator
     oscillator_init();
@@ -108,13 +110,15 @@ int main(void) {
         // clear watchdog timer
         CLRWDT();
         
-        // reset radio if no message received for over 1 minute
-        if (millis() - last_message_millis > RESET_RADIO_ms){
+        // reset radio if no message received for over 1 minute or
+        // reboot radio command through CAN message
+        if (millis() - last_message_millis > RESET_RADIO_ms || reboot_radio){
             // reset radio
             SET_RADIO_POWER(0);
             while ((millis() - last_message_millis) < (50 + RESET_RADIO_ms));    // wait for 50 ms
             SET_RADIO_POWER(1);
             last_message_millis = millis();
+            reboot_radio = false;
         }
     }
 }
@@ -146,6 +150,12 @@ static void can_msg_handler(const can_msg_t *msg) {
     int dest_id = -1;
 
     switch (msg_type) {
+        case MSG_ACTUATOR_CMD:
+            if (get_actuator_id(msg) == RADIO) {
+                reboot_radio = true;
+            }
+            break;
+        
         case MSG_LEDS_ON:
             RED_LED_SET(true);
             BLUE_LED_SET(true);
