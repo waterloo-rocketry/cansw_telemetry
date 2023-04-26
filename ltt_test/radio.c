@@ -62,7 +62,7 @@ void radio_handle_input_character(char c) {
             parse_i = 0;
             return;
         }
-        msg.sid |= (uint16_t) (d << ((3 - parse_i) * 4));
+        msg.sid |= ((uint16_t) d) << ((3 - parse_i) * 4);
         parse_i++;
         return;
     } else if (parse_i % 3 == 1) { // We expect a comma or a semicolon
