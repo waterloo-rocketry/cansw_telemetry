@@ -11,8 +11,7 @@
 #define BUS_DOWN_MAX_LOOP_TIME_DIFF_ms 3000
 #define MAX_SENSOR_TIME_DIFF_ms 5
 // reset radio, 1 minute after the last message received from radio
-//#define RESET_RADIO_ms 60000
-#define RESET_RADIO_ms 10000
+#define RESET_RADIO_ms 60000
 
 #define HIGH_SPEED_MSG_DIVIDER 23 //Used to downsample sensor data, MUST BE PRIME
 //lets about 1 in 800 messages of each type through, good if we are running around 1 kHz
@@ -87,7 +86,7 @@ int main(void) {
             txb_enqueue(&msg);
 
             build_board_stat_msg(millis(), E_NOMINAL, NULL, 0, &msg);
-            //txb_enqueue(&msg);
+            txb_enqueue(&msg);
         }
 
         if (millis() - last_sensor_millis > MAX_SENSOR_TIME_DIFF_ms) {
