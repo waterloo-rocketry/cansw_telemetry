@@ -75,10 +75,10 @@ bool radio_handle_input_character(char c) {
             return 0;
         }
         if (c == ';') { // end of message
-            crc_read1 = 1;
+            crc_read1 = 1; // go to the if (crc_read1) below next parse 
         }
         // either the message ended or it was an invalid character, either way reset
-        parse_i++; // go to the if (crc_read1) below next parse 
+        parse_i = 0;
         return 0;
     } else { // hex data chars
         uint8_t d = hex2num(c);
