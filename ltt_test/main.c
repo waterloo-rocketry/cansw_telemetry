@@ -11,7 +11,8 @@
 #define BUS_DOWN_MAX_LOOP_TIME_DIFF_ms 3000
 #define MAX_SENSOR_TIME_DIFF_ms 5
 // reset radio, 1 minute after the last message received from radio
-#define RESET_RADIO_ms 60000
+//#define RESET_RADIO_ms 60000
+#define RESET_RADIO_ms 10000
 
 #define HIGH_SPEED_MSG_DIVIDER 23 //Used to downsample sensor data, MUST BE PRIME
 //lets about 1 in 800 messages of each type through, good if we are running around 1 kHz
@@ -86,7 +87,7 @@ int main(void) {
             txb_enqueue(&msg);
 
             build_board_stat_msg(millis(), E_NOMINAL, NULL, 0, &msg);
-            txb_enqueue(&msg);
+            //txb_enqueue(&msg);
         }
 
         if (millis() - last_sensor_millis > MAX_SENSOR_TIME_DIFF_ms) {
@@ -94,8 +95,9 @@ int main(void) {
         }
 
         while (uart_byte_available()) {
-            radio_handle_input_character(uart_read_byte());
-            last_message_millis = millis();
+            if (radio_handle_input_character(uart_read_byte())){
+                last_message_millis = millis();
+            }
         }
 
         if (!rcvb_is_empty()) {
@@ -115,7 +117,8 @@ int main(void) {
         if (millis() - last_message_millis > RESET_RADIO_ms || reboot_radio){
             // reset radio
             SET_RADIO_POWER(0);
-            while ((millis() - last_message_millis) < (50 + RESET_RADIO_ms));    // wait for 50 ms
+            uint32_t wait = millis();
+            while (millis() - wait < 50);    // wait for 50 ms
             SET_RADIO_POWER(1);
             last_message_millis = millis();
             reboot_radio = false;
@@ -151,7 +154,7 @@ static void can_msg_handler(const can_msg_t *msg) {
 
     switch (msg_type) {
         case MSG_ACTUATOR_CMD:
-            if (get_actuator_id(msg) == RADIO) {
+            if (get_actuator_id(msg) == ACTUATOR_RADIO && get_req_actuator_state(msg) == ACTUATOR_OFF) {
                 reboot_radio = true;
             }
             break;

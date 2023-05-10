@@ -42,7 +42,7 @@ uint8_t hex2num(char ch) {
     return 255;
 }
 
-void radio_handle_input_character(char c) {
+bool radio_handle_input_character(char c) {
     static uint8_t parse_i = 0;
     static can_msg_t msg;
     static uint8_t crc_read1 = 0; // read the first hex of the parity byte
@@ -57,42 +57,42 @@ void radio_handle_input_character(char c) {
             parse_i++;
         } else {
         } // ignore unknown character
-        return;
+        return 0;
     } else if (parse_i <= 3) { // SID bits
         uint8_t d = hex2num(c);
         if (d == 255) { // invalid character
             parse_i = 0;
-            return;
+            return 0;
         }
         msg.sid |= (uint16_t) d << ((3 - parse_i) * 4);
         parse_i++;
-        return;
+        return 0;
     } else if (parse_i % 3 == 1) { // We expect a comma or a semicolon
         if (c == ',') { // another data byte follows, make room for it
             msg.data_len += 1;
             msg.data[msg.data_len - 1] = 0;
             parse_i++;
-            return;
+            return 0;
         }
         if (c == ';') { // end of message
             crc_read1 = 1;
         }
         // either the message ended or it was an invalid character, either way reset
         parse_i++; // go to the if (crc_read1) below next parse 
-        return;
+        return 0;
     } else { // hex data chars
         uint8_t d = hex2num(c);
         if (d == 255) { // invalid character
             parse_i = 0;
             crc_read1 = 0;
             crc_read2 = 0;
-            return;
+            return 0;
         }
         if (crc_read1) {
             exp_crc = d;
             crc_read1 = 0;
             crc_read2 = 1;
-            return;
+            return 0;
         }
         if (crc_read2) {
             exp_crc = ((exp_crc << 4) & 0xf0) | (d & 0xf); // is it?
@@ -110,15 +110,16 @@ void radio_handle_input_character(char c) {
                     RESET();
                 }
                 txb_enqueue(&msg);
+                return 1;
             }
             parse_i = 0;
-            return;
+            return 0;
         }
 
         // parse_i % 3 == 2 for the first nibble and 0 for the second, so just double it
         msg.data[msg.data_len - 1] |= d << ((parse_i % 3) * 2);
         parse_i++;
-        return;
+        return 0;
     }
 }
 
