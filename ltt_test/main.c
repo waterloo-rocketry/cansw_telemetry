@@ -22,7 +22,8 @@ static void can_msg_handler(const can_msg_t *msg);
 uint8_t tx_pool[100];
 uint8_t rx_pool[100];
 
-bool reboot_radio = false;
+bool set_radio_power = false;
+bool radio_power = true;
 
 int main(void) {
     // initialize the external oscillator
@@ -94,9 +95,8 @@ int main(void) {
         }
 
         while (uart_byte_available()) {
-            if (radio_handle_input_character(uart_read_byte())){
-                last_message_millis = millis();
-            }
+            radio_handle_input_character(uart_read_byte());
+            last_message_millis = millis();
         }
 
         if (!rcvb_is_empty()) {
@@ -111,16 +111,20 @@ int main(void) {
         // clear watchdog timer
         CLRWDT();
         
-        // reset radio if no message received for over 1 minute or
-        // reboot radio command through CAN message
-        if (millis() - last_message_millis > RESET_RADIO_ms || reboot_radio){
+        // reset radio if no message received for over 1 minute
+        if (millis() - last_message_millis > RESET_RADIO_ms){
             // reset radio
             SET_RADIO_POWER(0);
             uint32_t wait = millis();
             while (millis() - wait < 50);    // wait for 50 ms
             SET_RADIO_POWER(1);
             last_message_millis = millis();
-            reboot_radio = false;
+        }
+        
+        // manually turn on/off radio through CAN message
+        if (set_radio_power){
+            SET_RADIO_POWER(radio_power);
+            set_radio_power = false;
         }
     }
 }
@@ -153,8 +157,15 @@ static void can_msg_handler(const can_msg_t *msg) {
 
     switch (msg_type) {
         case MSG_ACTUATOR_CMD:
-            if (get_actuator_id(msg) == ACTUATOR_RADIO && get_req_actuator_state(msg) == ACTUATOR_OFF) {
-                reboot_radio = true;
+            if (get_actuator_id(msg) == ACTUATOR_RADIO) {
+                if (get_req_actuator_state(msg) == ACTUATOR_OFF && radio_power){
+                    set_radio_power = true;
+                    radio_power = false;
+                }
+                else if (get_req_actuator_state(msg) == ACTUATOR_ON && !radio_power){
+                    set_radio_power = true;
+                    radio_power = true;
+                }
             }
             break;
         
