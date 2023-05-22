@@ -77,9 +77,10 @@ void radio_handle_input_character(char c) {
             return;
         }
         // either the message ended or it was an invalid character, either way reset
-        parse_i++; // go to the if (EoM_flag) below next parse 
+        parse_i = 0;
         return;
-    } else { // hex data chars
+        }
+        else { // hex data chars
         uint8_t d = hex2num(c);
         if (d == 255) { // invalid character
             parse_i = 0;
