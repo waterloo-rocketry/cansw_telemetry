@@ -158,17 +158,17 @@ static void can_msg_handler(const can_msg_t *msg) {
     switch (msg_type) {
         case MSG_ACTUATOR_CMD:
             if (get_actuator_id(msg) == ACTUATOR_RADIO) {
-                if (get_req_actuator_state(msg) == ACTUATOR_OFF && radio_power){
+                if (get_req_actuator_state(msg) == ACTUATOR_OFF){
                     set_radio_power = true;
                     radio_power = false;
                 }
-                else if (get_req_actuator_state(msg) == ACTUATOR_ON && !radio_power){
+                else if (get_req_actuator_state(msg) == ACTUATOR_ON){
                     set_radio_power = true;
                     radio_power = true;
                 }
             }
             break;
-        
+
         case MSG_LEDS_ON:
             RED_LED_SET(true);
             BLUE_LED_SET(true);
