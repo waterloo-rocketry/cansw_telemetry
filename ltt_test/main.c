@@ -80,7 +80,6 @@ int main(void) {
 
             // radio current checks
             can_msg_t msg;
-            uint8_t data[2] = {0};
 
             uint16_t radio_curr = read_radio_curr_ma();
             build_analog_data_msg(millis(), SENSOR_RADIO_CURR, radio_curr, &msg);
@@ -93,7 +92,28 @@ int main(void) {
         if (millis() - last_sensor_millis > MAX_SENSOR_TIME_DIFF_ms) {
             update_sensor_low_pass();
         }
-
+        
+        // reset radio if no message received for over 1 minute
+        if (millis() - last_message_millis > RESET_RADIO_ms){
+            // reset radio
+            SET_RADIO_POWER(0);
+            uint32_t wait = millis();
+            // send error msg
+            can_msg_t msg;
+            build_board_stat_msg(millis(), E_RADIO_SIGNAL_LOST, NULL, 0, &msg);
+            txb_enqueue(&msg);
+            // wait for 50 ms
+            while (millis() - wait < 50);    
+            SET_RADIO_POWER(1);
+            last_message_millis = millis();
+        }
+        
+        // manually turn on/off radio through CAN message
+        if (set_radio_power){
+            SET_RADIO_POWER(radio_power);
+            set_radio_power = false;
+        }
+        
         while (uart_byte_available()) {
             radio_handle_input_character(uart_read_byte());
             last_message_millis = millis();
@@ -110,22 +130,6 @@ int main(void) {
         
         // clear watchdog timer
         CLRWDT();
-        
-        // reset radio if no message received for over 1 minute
-        if (millis() - last_message_millis > RESET_RADIO_ms){
-            // reset radio
-            SET_RADIO_POWER(0);
-            uint32_t wait = millis();
-            while (millis() - wait < 50);    // wait for 50 ms
-            SET_RADIO_POWER(1);
-            last_message_millis = millis();
-        }
-        
-        // manually turn on/off radio through CAN message
-        if (set_radio_power){
-            SET_RADIO_POWER(radio_power);
-            set_radio_power = false;
-        }
     }
 }
 
