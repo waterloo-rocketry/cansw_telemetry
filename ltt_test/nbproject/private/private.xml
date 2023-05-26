@@ -3,6 +3,7 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
+            <file>file:/C:/Users/AAAAA/Desktop/cansw_telemetry/ltt_test/canlib/util/safe_ring_buffer.c</file>
             <file>file:/C:/Users/AAAAA/Desktop/cansw_telemetry/ltt_test/uart.h</file>
             <file>file:/C:/Users/AAAAA/Desktop/cansw_telemetry/ltt_test/canlib/can_common.c</file>
             <file>file:/C:/Users/AAAAA/Desktop/cansw_telemetry/ltt_test/radio.h</file>
@@ -12,6 +13,8 @@
             <file>file:/C:/Users/AAAAA/Desktop/cansw_telemetry/ltt_test/radio.c</file>
             <file>file:/C:/Users/AAAAA/Desktop/cansw_telemetry/ltt_test/canlib/can_common.h</file>
             <file>file:/C:/Users/AAAAA/Desktop/cansw_telemetry/ltt_test/main.c</file>
+            <file>file:/C:/Users/AAAAA/Desktop/cansw_telemetry/ltt_test/uart.c</file>
+            <file>file:/C:/Users/AAAAA/Desktop/cansw_telemetry/ltt_test/device_config.c</file>
         </group>
     </open-files>
 </project-private>

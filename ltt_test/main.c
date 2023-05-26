@@ -108,7 +108,8 @@ int main(void) {
             uint32_t wait = millis();
             // send error msg
             can_msg_t msg;
-            build_board_stat_msg(millis(), E_RADIO_SIGNAL_LOST, NULL, 0, &msg);
+            uint8_t error_data[2] = {0,0};
+            build_board_stat_msg(millis(), E_RADIO_SIGNAL_LOST, error_data, 2, &msg);
             txb_enqueue(&msg);
             // wait for 50 ms
             while (millis() - wait < 50);    
