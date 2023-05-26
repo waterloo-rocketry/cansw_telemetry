@@ -11,7 +11,8 @@
 #define BUS_DOWN_MAX_LOOP_TIME_DIFF_ms 3000
 #define MAX_SENSOR_TIME_DIFF_ms 5
 // reset radio, 1 minute after the last message received from radio
-#define RESET_RADIO_ms 60000
+//#define RESET_RADIO_ms 60000
+#define RESET_RADIO_ms 10000
 
 #define HIGH_SPEED_MSG_DIVIDER 23 //Used to downsample sensor data, MUST BE PRIME
 //lets about 1 in 800 messages of each type through, good if we are running around 1 kHz
@@ -83,14 +84,19 @@ int main(void) {
 
             uint16_t radio_curr = read_radio_curr_ma();
             build_analog_data_msg(millis(), SENSOR_RADIO_CURR, radio_curr, &msg);
-            txb_enqueue(&msg);
+            //txb_enqueue(&msg);
 
             build_board_stat_msg(millis(), E_NOMINAL, NULL, 0, &msg);
-            txb_enqueue(&msg);
+            //txb_enqueue(&msg);
         }
 
         if (millis() - last_sensor_millis > MAX_SENSOR_TIME_DIFF_ms) {
             update_sensor_low_pass();
+        }
+        
+        while (uart_byte_available()) {
+            radio_handle_input_character(uart_read_byte());
+            last_message_millis = millis();
         }
         
         // reset radio if no message received for over 1 minute
@@ -112,11 +118,6 @@ int main(void) {
         if (set_radio_power){
             SET_RADIO_POWER(radio_power);
             set_radio_power = false;
-        }
-        
-        while (uart_byte_available()) {
-            radio_handle_input_character(uart_read_byte());
-            last_message_millis = millis();
         }
 
         if (!rcvb_is_empty()) {

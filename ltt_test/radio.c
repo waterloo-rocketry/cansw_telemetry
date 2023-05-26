@@ -74,13 +74,13 @@ void radio_handle_input_character(char c) {
         }
         if (c == ';') { // end of message
             EoM_flag = 1;
+            parse_i++;
             return;
         }
         // either the message ended or it was an invalid character, either way reset
         parse_i = 0;
         return;
-        }
-        else { // hex data chars
+     } else { // hex data chars
         uint8_t d = hex2num(c);
         if (d == 255) { // invalid character
             parse_i = 0;
@@ -92,6 +92,7 @@ void radio_handle_input_character(char c) {
             if (crc_i == 0) {
                 exp_crc = d;
                 crc_i++;
+                return;
             }
             if (crc_i == 1) {
                 exp_crc = (exp_crc << 4) | d;
