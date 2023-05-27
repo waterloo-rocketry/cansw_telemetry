@@ -8,13 +8,12 @@
 #include "adc.h"
 
 #define MAX_LOOP_TIME_DIFF_ms 500
-#define BUS_DOWN_MAX_LOOP_TIME_DIFF_ms 3000
+#define MAX_BUS_DEAD_TIME_ms 1000
 #define MAX_SENSOR_TIME_DIFF_ms 5
 // reset radio, 1 minute after the last message received from radio
 #define RESET_RADIO_ms 60000
 
 #define HIGH_SPEED_MSG_DIVIDER 23 //Used to downsample sensor data, MUST BE PRIME
-//lets about 1 in 800 messages of each type through, good if we are running around 1 kHz
 
 static void can_msg_handler(const can_msg_t *msg);
 
@@ -22,8 +21,8 @@ static void can_msg_handler(const can_msg_t *msg);
 uint8_t tx_pool[100];
 uint8_t rx_pool[100];
 
-bool set_radio_power = false;
-bool radio_power = true;
+uint32_t last_bus_message_millis = 0;
+uint32_t last_radio_message_millis = 0;
 
 int main(void) {
     // initialize the external oscillator
@@ -65,13 +64,24 @@ int main(void) {
     // loop timer
     uint32_t last_millis = millis();
     uint32_t last_sensor_millis = millis();
-    uint32_t last_message_millis = millis();
 
     bool heartbeat = false;
 
     while (1) {
         // clear watchdog timer
         CLRWDT();
+        
+        if (OSCCON2 != 0x70) { // If the fail-safe clock monitor has triggered
+            oscillator_init();
+        }
+        
+        uint32_t dt = millis() - last_bus_message_millis;
+        // prevent race condition where last_message_millis is greater than millis
+        // by checking for overflow
+        if (dt > MAX_BUS_DEAD_TIME_ms && dt < (1 << 15)) {
+            // We've got too long without seeing a valid CAN message (including one of ours)
+            RESET();
+        }
         
         if (millis() - last_millis > MAX_LOOP_TIME_DIFF_ms) {
             // update our loop counter
@@ -98,11 +108,11 @@ int main(void) {
         
         while (uart_byte_available()) {
             radio_handle_input_character(uart_read_byte());
-            last_message_millis = millis();
+            last_radio_message_millis = millis();
         }
         
         // reset radio if no message received for over 1 minute
-        if (millis() - last_message_millis > RESET_RADIO_ms){
+        if (millis() - last_radio_message_millis > RESET_RADIO_ms){
             // reset radio
             SET_RADIO_POWER(0);
             uint32_t wait = millis();
@@ -114,13 +124,7 @@ int main(void) {
             // wait for 50 ms
             while (millis() - wait < 50);    
             SET_RADIO_POWER(1);
-            last_message_millis = millis();
-        }
-        
-        // manually turn on/off radio through CAN message
-        if (set_radio_power){
-            SET_RADIO_POWER(radio_power);
-            set_radio_power = false;
+            last_radio_message_millis = millis();
         }
 
         if (!rcvb_is_empty()) {
@@ -137,6 +141,7 @@ int main(void) {
 uint8_t high_fq_data_counter = 0;
 
 static void can_msg_handler(const can_msg_t *msg) {
+    last_bus_message_millis = millis();
     uint16_t msg_type = get_message_type(msg);
 
     // A little hacky, but convenient way to filter out the high speed stuff 
@@ -163,13 +168,12 @@ static void can_msg_handler(const can_msg_t *msg) {
     switch (msg_type) {
         case MSG_ACTUATOR_CMD:
             if (get_actuator_id(msg) == ACTUATOR_RADIO) {
-                if (get_req_actuator_state(msg) == ACTUATOR_OFF){
-                    set_radio_power = true;
-                    radio_power = false;
+                if (get_req_actuator_state(msg) == ACTUATOR_OFF) {
+                    SET_RADIO_POWER(false);
                 }
-                else if (get_req_actuator_state(msg) == ACTUATOR_ON){
-                    set_radio_power = true;
-                    radio_power = true;
+                else if (get_req_actuator_state(msg) == ACTUATOR_ON) {
+                    last_radio_message_millis = millis();
+                    SET_RADIO_POWER(true);
                 }
             }
             break;

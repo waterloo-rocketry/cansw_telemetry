@@ -9,8 +9,8 @@ void oscillator_init(void)
     while (OSCCON3bits.ORDY == 0)  {}
     //if the currently active clock (CON2) isn't the selected clock (CON1)
     if (OSCCON2 != 0x20) {
-        //infinite loop, something is broken, what even is an assert()?
-        while (1) {}
+        // try to wait for the oscillator to come back
+        for(uint16_t i = 0; i < 60000; i++) {}
     }
 }
 
