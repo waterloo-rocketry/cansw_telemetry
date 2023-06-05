@@ -21,8 +21,8 @@ static void can_msg_handler(const can_msg_t *msg);
 uint8_t tx_pool[100];
 uint8_t rx_pool[100];
 
-uint32_t last_bus_message_millis = 0;
-uint32_t last_radio_message_millis = 0;
+bool seen_can_message = false;
+bool seen_radio_message = false;
 
 int main(void) {
     // initialize the external oscillator
@@ -64,6 +64,8 @@ int main(void) {
     // loop timer
     uint32_t last_millis = millis();
     uint32_t last_sensor_millis = millis();
+    uint32_t last_bus_message_millis = 0;
+    uint32_t last_radio_message_millis = 0;
 
     bool heartbeat = false;
 
@@ -75,10 +77,16 @@ int main(void) {
             oscillator_init();
         }
         
-        uint32_t dt = millis() - last_bus_message_millis;
-        // prevent race condition where last_message_millis is greater than millis
-        // by checking for overflow
-        if (dt > MAX_BUS_DEAD_TIME_ms && dt < (1 << 15)) {
+        if (seen_can_message) {
+            seen_can_message = false;
+            last_bus_message_millis = millis();
+        }
+        if (seen_radio_message) {
+            seen_radio_message = false;
+            last_radio_message_millis = millis();
+        }
+        
+        if (millis() - last_bus_message_millis > MAX_BUS_DEAD_TIME_ms) {
             // We've got too long without seeing a valid CAN message (including one of ours)
             RESET();
         }
@@ -141,7 +149,7 @@ int main(void) {
 uint8_t high_fq_data_counter = 0;
 
 static void can_msg_handler(const can_msg_t *msg) {
-    last_bus_message_millis = millis();
+    seen_can_message = true;
     uint16_t msg_type = get_message_type(msg);
 
     // A little hacky, but convenient way to filter out the high speed stuff 
@@ -172,7 +180,7 @@ static void can_msg_handler(const can_msg_t *msg) {
                     SET_RADIO_POWER(false);
                 }
                 else if (get_req_actuator_state(msg) == ACTUATOR_ON) {
-                    last_radio_message_millis = millis();
+                    seen_radio_message = true;
                     SET_RADIO_POWER(true);
                 }
             }
