@@ -52,6 +52,7 @@ void radio_handle_input_character(char c) {
             msg.sid = 0;
             msg.data_len = 0;
             crc_i = 0;
+            EoM_flag = 0;
             parse_i++;
         } else {
         } // ignore unknown character
@@ -84,7 +85,6 @@ void radio_handle_input_character(char c) {
         uint8_t d = hex2num(c);
         if (d == 255) { // invalid character
             parse_i = 0;
-            EoM_flag = 0;
             return;
         }
         if (EoM_flag) {
