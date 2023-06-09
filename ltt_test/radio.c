@@ -42,122 +42,149 @@ uint8_t hex2num(char ch) {
     return 255;
 }
 
+typedef enum {
+    WAITING,
+    SID,
+    DATA_SEP,
+    DATA,
+    CHECKSUM,
+} parse_state_t;
+
 void radio_handle_input_character(char c) {
-    static uint8_t parse_i = 0;
-    static uint8_t crc_i = 0;
     static can_msg_t msg;
-    static uint8_t EoM_flag = 0;
-    if (parse_i == 0) { // expecting the start of a new message
-        if (c == 'm' || c == 'M') {
-            msg.sid = 0;
-            msg.data_len = 0;
-            crc_i = 0;
-            EoM_flag = 0;
+    static uint8_t msg_crc;
+    static parse_state_t parse_state = WAITING;
+    static uint8_t parse_i = 0;
+
+    uint8_t d;
+    switch(parse_state) {
+        case WAITING:
+            if(c == 'm' || c == 'M') {
+                msg.sid = 0;
+                msg.data_len = 0;
+                parse_state = SID;
+                parse_i = 0;
+            }
+            break;
+
+        case SID:
+            d = hex2num(c);
+
+            if(d == 255) { // invalid hex
+                parse_state = WAITING;
+                break;
+            }
+
+            msg.sid = (msg.sid << 4 | d) & 0x0fff;
+
             parse_i++;
-        } else {
-        } // ignore unknown character
-        return;
-    } else if (parse_i <= 3) { // SID bits
-        uint8_t d = hex2num(c);
-        if (d == 255) { // invalid character
-            parse_i = 0;
-            return;
-        }
-        msg.sid |= ((uint16_t) d) << ((3 - parse_i) * 4);
-        parse_i++;
-        return;
-    } else if (parse_i % 3 == 1) { // We expect a comma or a semicolon
-        if (c == ',') { // another data byte follows, make room for it
-            msg.data_len += 1;
-            msg.data[msg.data_len - 1] = 0;
-            parse_i++;
-            return;
-        }
-        if (c == ';') { // end of message
-            EoM_flag = 1;
-            parse_i++;
-            return;
-        }
-        // either the message ended or it was an invalid character, either way reset
-        parse_i = 0;
-        return;
-     } else { // hex data chars
-        uint8_t d = hex2num(c);
-        if (d == 255) { // invalid character
-            parse_i = 0;
-            return;
-        }
-        if (EoM_flag) {
-            static uint8_t exp_crc;
-            if (crc_i == 0) {
-                exp_crc = d;
-                crc_i++;
+
+            if(parse_i == 1) {
+                // checksum for first sid byte
+                msg_crc = crc8_checksum(&d, 1, 0);
+            }
+
+            if(++parse_i >= 3) { // sid has 3 hex digits
+                // checksum for second sid byte
+                // passing uint16_t* as uint8_t* in little endian results in lowest byte only
+                msg_crc = crc8_checksum((uint8_t*) &msg.sid, 1, msg_crc);
+                parse_state = DATA_SEP;
+            }
+
+            break;
+
+        case DATA:
+            d = hex2num(c);
+
+            if(d == 255) { // invalid hex
+                parse_state = WAITING;
+                break;
+            }
+
+            msg.data[msg.data_len-1] = (msg.data[msg.data_len-1] << 4 | d) & 0xff;
+
+            if(++parse_i >= 2) { // DATA bytes have 2 hex digits
+                // checksum for this data byte
+                msg_crc = crc8_checksum(&d, 1, msg_crc);
+                parse_state = DATA_SEP;
+            }
+
+            break;
+
+        case CHECKSUM:
+            d = hex2num(c);
+
+            if (d == 255) { // invalid hex
+                parse_state = WAITING;
                 return;
             }
-            if (crc_i == 1) {
-                exp_crc = (exp_crc << 4) | d;
-                
-                uint8_t crc  = table[(0x00 ^ ((msg.sid) >> 8)) & 0xff]; // sid 1st byte
-                crc  = table[(crc ^ ((msg.sid) & 0xff)) & 0xff];               // sid 2nd byte
-                crc = crc8_checksum(msg.data, msg.data_len, crc);
 
-                //compare expect crc with calculated
-                if (exp_crc == crc) {
+            static uint8_t exp_crc;
+            exp_crc = (exp_crc << 4 | d) & 0xff;
+
+            if(++parse_i == 2) { // crc8 has 2 hex digits
+                if(exp_crc == msg_crc) {
                     if (get_message_type(&msg) == MSG_RESET_CMD && get_reset_board_id(&msg) == 0) {
-                        //SET_BUS_POWER(false);
                         RESET();
                     }
                     txb_enqueue(&msg);
                 }
-                parse_i = 0;
+
+                parse_state = WAITING;
             }
-            return;
-        }
-        // parse_i % 3 == 2 for the first nibble and 0 for the second, so just double it
-        msg.data[msg.data_len - 1] |= d << ((parse_i % 3) * 2);
-        parse_i++;
-        return;
+            break;
+
+        case DATA_SEP:
+            switch(c) {
+                case ',':
+                    parse_state = DATA;
+                    parse_i = 0;
+                    if(msg.data_len < 8)
+                        msg.data[msg.data_len++] = 0;
+                    else // too much data
+                        parse_state = WAITING;
+                    break;
+                case ';':
+                    parse_state = CHECKSUM;
+                    parse_i = 0;
+                    break;
+                default:
+                    parse_state = WAITING;
+                    break;
+            }
+            break;
+
+        default:
+            parse_state = WAITING;
+            break;
     }
 }
 
 void serialize_can_msg(can_msg_t *msg) {
-    const char hex_lookup_table[16] = {
-        '0', '1', '2', '3',
-        '4', '5', '6', '7',
-        '8', '9', 'A', 'B',
-        'C', 'D', 'E', 'F'
-    };
+    /*
+       |------+------------+--------+-----------------------------|
+       | byte | name       | length | comment                     |
+       |------+------------+--------+-----------------------------|
+       | 0    | start byte | 1      | always 0x2                  |
+       | 1    | length     | 1      |                             |
+       | 2    | data       | length |                             |
+       | 3    | checksum   | 1      | crc8 of {0x2, length, data} |
+       |------+------------+--------+-----------------------------|
+   */
+    uint8_t buff[1 + 1 + 8 + 1];
 
-    // crc8 for error checking, need 7 parity bits
-    //length for 1 byte ("XX,") * number of bytes-1 + extras and last byte
-    char temp_buffer[5 + 3 * 8 + 2 + 1];
-    // The first character is to identify this as a valid message
-    // The next 3 characters are the sid of the input message followed by a ':'
-    // The next 2 characters are elements of the data array apart of the input message followed by a ','
-    // The next 2 characters are for formatting output
-    // The last character is used to end the string made from temp_buffer
-    temp_buffer[0] = '$';
-    temp_buffer[1] = hex_lookup_table[(msg->sid >> 8) & 0xf];
-    temp_buffer[2] = hex_lookup_table[(msg->sid >> 4) & 0xf];
-    temp_buffer[3] = hex_lookup_table[msg->sid & 0xf];
+    // header
+    buff[0] = 0x02;
+    buff[1] = msg->data_len;
 
-    temp_buffer[4] = ':';
-    uint8_t i = 0;
-    for (i = 0; i < msg->data_len && i < 8; ++i) {
-        temp_buffer[3 * i + 5] = hex_lookup_table[(msg->data[i] >> 4)];
-        temp_buffer[3 * i + 6] = hex_lookup_table[(msg->data[i] & 0xf)];
-        temp_buffer[3 * i + 7] = ',';
+    // data
+    for(uint8_t i = 0; i < msg->data_len; i++) {
+        buff[i+2] = msg->data[i];
     }
-    temp_buffer[3 * i + 4] = ';'; // Delimit for checksum
 
-    // calculate crc8
-    uint8_t crc  = table[(0x00 ^ ((msg->sid) >> 8)) & 0xff]; // sid 1st byte
-    crc  = table[(crc ^ ((msg->sid) & 0xff)) & 0xff];               // sid 2nd byte
-    crc = crc8_checksum(msg->data, msg->data_len, crc);
+    // calculate checksum
+    buff[msg->data_len + 2] = crc8_checksum(buff, msg->data_len + 2, 0);
 
-    temp_buffer[3 * i + 5] = hex_lookup_table[(crc >> 4)];
-    temp_buffer[3 * i + 6] = hex_lookup_table[(crc & 0xf)];
-    temp_buffer[3 * i + 7] = '\n';
-
-    uart_transmit_buffer(temp_buffer, 3 * i + 8);
+    // transmit
+    uart_transmit_buffer(buff, msg->data_len + 4);
 }
