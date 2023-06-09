@@ -102,7 +102,7 @@ int main(void) {
             // radio current checks
             can_msg_t msg;
 
-            uint16_t radio_curr = read_radio_curr_ma();
+            uint16_t radio_curr = read_radio_curr_low_pass_ma();
             build_analog_data_msg(millis(), SENSOR_RADIO_CURR, radio_curr, &msg);
             txb_enqueue(&msg);
 

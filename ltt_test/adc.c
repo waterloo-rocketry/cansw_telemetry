@@ -52,5 +52,5 @@ void update_sensor_low_pass(void) {
 }
 
 uint16_t read_radio_curr_low_pass_ma() {
-    return low_pass_radio_curr_ma;
+    return (uint16_t) low_pass_radio_curr_ma;
 }
