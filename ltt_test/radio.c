@@ -162,62 +162,33 @@ void radio_handle_input_character(char c) {
 
 void serialize_can_msg(can_msg_t *msg) {
     /*
-       |-------------+------------+--------+-----------------------------------|
-       | byte[bit]   | name       | length | comment                           |
-       |-------------+------------+--------+-----------------------------------|
-       | 0           | header     | 1 byte |                                   |
-       | 0[7..6]     | sync start | 2 bit  | always 0x2, marks start of frame  |
-       | 0[5..0]     | CRC LSB    | 6 bit  | bit [5..0] of CRC                 |
-       |-------------+------------+--------+-----------------------------------|
-       | 1..2        | sid        | 2 byte | lower byte first                  |
-       | bit[7]      | reserved   | 1 bit  | MSB = 0 to indicate frame content |
-       | bit[6..0]   | sid        | 7 bit  | bits [13..7], [6..0] of sid       |
-       |-------------+------------+--------+-----------------------------------|
-       | 3..length+2 | data       | length |                                   |
-       | bit[7]      | reserved   | 1 bit  | MSB = 0 to indicate frame content |
-       | bit[6..0]   | data       | 7 bit  | bits [6..0] of data bytes         |
-       |-------------+------------+--------+-----------------------------------|
-       | length+3    | MSBs       | 1 byte |                                   |
-       | bit[7]      | reserved   | 1 bit  | MSB = 0 to indicate frame content |
-       | bit[6..5]   | sid        | 2 bit  | bit [15..14] of sid               |
-       | bit[4..0]   | data[4..0] | 5 bit  | bit 7 for data [4..0]             |
-       |-------------+------------+--------+-----------------------------------|
-       | length+4    | frame end  | 1 byte | end of frame                      |
-       | bit[7..6]   | sync end   | 2 bit  | always 0x3, marks end of frame    |
-       | bit[5]      | unused     | 1 bit  |                                   |
-       | bit[4..3]   | CRC MSB    | 2 bit  | bit [7..6] of CRC                 |
-       | bit[2..0]   | data[7..5] | 3 bit  | bit 7 for data [7..5]             |
-       |-------------+------------+--------+-----------------------------------|
-       CRC is calculated from {sid & 0xFF, sid >> 8 & 0xFF, data}
+       |-------------+------------+--------+-------------------------------|
+       | byte[bit]   | name       | length | comment                       |
+       |-------------+------------+--------+-------------------------------|
+       | 0           | header     | 1      | always 0x02                   |
+       |-------------+------------+--------+-------------------------------|
+       | 1[7..4]     | length     | 4 bit  | total length including header |
+       | 1[3]        | unused     | 1 bit  |                               |
+       | 1[2..0]     | sid[10..8] | 3 bit  |                               |
+       |-------------+------------+--------+-------------------------------|
+       | 2           | sid[7..0]  | 1      |                               |
+       | 3..length+2 | data       | length |                               |
+       | length+3    | checksum   | 1      | crc8 of all previous bytes    |
+       |-------------+------------+--------+-------------------------------|
    */
-    if(msg->data_len == 0) return;
-    uint8_t len = msg->data_len < 8 ? msg->data_len : 8;
-    uint8_t buff[13] = {0};
-
-    // CRC calculation
-    uint8_t crc = 0;
-    uint8_t sid_l = msg->sid      & 0xff;
-    uint8_t sid_h = msg->sid >> 8 & 0xff;
-    crc = crc8_checksum(&sid_l, 1, crc);
-    crc = crc8_checksum(&sid_h, 1, crc);
-    crc = crc8_checksum(msg->data, len, crc);
-
-    // header, frame end, CRC
-    buff[0]     = 0x80 | (crc & 0x3f);
-    buff[len+4] = 0xC0 | (crc & 0xc0) >> 3;
-
-    // sid
-    buff[1] = msg->sid      & 0x7f;
-    buff[2] = msg->sid >> 7 & 0x7f;
-    buff[len+3] = (msg->sid & 0xC000) >> 9;
+    uint8_t buff[12] = {0};
+    uint8_t len = msg->data_len + 4;
+    if(len > 12) len = 12;
 
     // data
-    for(uint8_t i = 0; i < len; i++) {
-        buff[i+3]              =  msg->data[i] & 0x7f;
-        if(i < 5) buff[len+3] |= (msg->data[i] & 0x80) >> (7-i);
-        else      buff[len+4] |= (msg->data[i] & 0x80) >> (7-i+5);
+    buff[0] = 0x02;
+    buff[1] = (len << 4 & 0xf0) | (msg->sid >> 8 & 0x07);
+    buff[2] = msg->sid & 0xff;
+    for(uint8_t i = 0; i < len-4; i++) {
+        buff[i+3] = msg->data[i];
     }
+    buff[len-1] = crc8_checksum(buff, len-1, 0);
 
     // transmit
-    uart_transmit_buffer(buff, len+5);
+    uart_transmit_buffer(buff, len);
 }
