@@ -105,7 +105,7 @@ void radio_handle_input_character(char c) {
 
             if(++parse_i >= 2) { // DATA bytes have 2 hex digits
                 // checksum for this data byte
-                msg_crc = crc8_checksum(&d, 1, msg_crc);
+                msg_crc = crc8_checksum(msg.data + msg.data_len - 1, 1, msg_crc);
                 parse_state = DATA_SEP;
             }
 
