@@ -8,17 +8,12 @@
 #include "adc.h"
 
 #define MAX_LOOP_TIME_DIFF_ms 500
-#define BUS_DOWN_MAX_LOOP_TIME_DIFF_ms 3000
+#define MAX_BUS_DEAD_TIME_ms 1000
 #define MAX_SENSOR_TIME_DIFF_ms 5
-// Time (in multiples of MAX_LOOP_TIME_DIFF_ms) between the bus down warning and power off
-#define CYCLES_TILL_POWER_DOWN 40
-
-#define BATT_WARNING_MV 9500
-#define BATT_WARNING_MA 3000
-#define BUS_WARNING_MA 900
+// reset radio, 1 minute after the last message received from radio
+#define RESET_RADIO_ms 60000
 
 #define HIGH_SPEED_MSG_DIVIDER 23 //Used to downsample sensor data, MUST BE PRIME
-//lets about 1 in 800 messages of each type through, good if we are running around 1 kHz
 
 static void can_msg_handler(const can_msg_t *msg);
 
@@ -26,10 +21,8 @@ static void can_msg_handler(const can_msg_t *msg);
 uint8_t tx_pool[100];
 uint8_t rx_pool[100];
 
-// bus state
-bool bus_powered = true;
-bool req_bus_powered = true;
-uint8_t ticks_until_power_down = 0;
+bool seen_can_message = false;
+bool seen_radio_message = false;
 
 int main(void) {
     // initialize the external oscillator
@@ -40,10 +33,13 @@ int main(void) {
 
     // set up pins
     gpio_init();
-    
+
     uart_init();
-    
+
     adc_init();
+
+    // power on radio
+    SET_RADIO_POWER(1);
 
     // Enable global interrupts
     INTCON0bits.GIE = 1;
@@ -62,114 +58,103 @@ int main(void) {
     can_generate_timing_params(_XTAL_FREQ * 4, &can_setup);
     can_init(&can_setup, can_msg_handler);
     // set up CAN buffers
-    rcvb_init(rx_pool, sizeof(rx_pool));
-    txb_init(tx_pool, sizeof(tx_pool), can_send, can_send_rdy);
+    rcvb_init(rx_pool, sizeof (rx_pool));
+    txb_init(tx_pool, sizeof (tx_pool), can_send, can_send_rdy);
 
     // loop timer
     uint32_t last_millis = millis();
     uint32_t last_sensor_millis = millis();
-    
+    uint32_t last_bus_message_millis = 0;
+    uint32_t last_radio_message_millis = 0;
+
     bool heartbeat = false;
+
     while (1) {
-        if (millis() - last_millis > (bus_powered ? MAX_LOOP_TIME_DIFF_ms : BUS_DOWN_MAX_LOOP_TIME_DIFF_ms)) {
+        // clear watchdog timer
+        CLRWDT();
+        
+        if (OSCCON2 != 0x70) { // If the fail-safe clock monitor has triggered
+            oscillator_init();
+        }
+        
+        if (seen_can_message) {
+            seen_can_message = false;
+            last_bus_message_millis = millis();
+        }
+        if (seen_radio_message) {
+            seen_radio_message = false;
+            last_radio_message_millis = millis();
+        }
+        
+        if (millis() - last_bus_message_millis > MAX_BUS_DEAD_TIME_ms) {
+            // We've got too long without seeing a valid CAN message (including one of ours)
+            RESET();
+        }
+        
+        if (millis() - last_millis > MAX_LOOP_TIME_DIFF_ms) {
             // update our loop counter
             last_millis = millis();
 
             // visual heartbeat indicator
             BLUE_LED_SET(heartbeat);
             heartbeat = !heartbeat;
-            
-            // current and voltage checks
-            bool status_ok = true;
-            uint16_t batt_volt = read_batt_volt_low_pass_mv();
+
+            // radio current checks
             can_msg_t msg;
-            uint8_t data[2] = {0};
-            build_analog_data_msg(millis(), SENSOR_ROCKET_BATT, batt_volt, &msg);
+
+            uint16_t radio_curr = read_radio_curr_low_pass_ma();
+            build_analog_data_msg(millis(), SENSOR_RADIO_CURR, radio_curr, &msg);
             txb_enqueue(&msg);
-            if (batt_volt < BATT_WARNING_MV) {
-                status_ok = false;
-                data[0] = (batt_volt >> 8) & 0xff;
-                data[1] = (batt_volt >> 0) & 0xff;
-                build_board_stat_msg(millis(), E_BATT_UNDER_VOLTAGE, data, 2, &msg);
-                txb_enqueue(&msg);
-            }
-            uint16_t batt_curr = read_batt_curr_low_pass_ma();
-            build_analog_data_msg(millis(), SENSOR_BATT_CURR, batt_curr, &msg);
+
+            build_board_stat_msg(millis(), E_NOMINAL, NULL, 0, &msg);
             txb_enqueue(&msg);
-            if (batt_curr > BATT_WARNING_MA) {
-                status_ok = false;
-                data[0] = (batt_curr >> 8) & 0xff;
-                data[1] = (batt_curr >> 0) & 0xff;
-                build_board_stat_msg(millis(), E_BATT_OVER_CURRENT, data, 2, &msg);
-                txb_enqueue(&msg);
-            }
-            uint16_t bus_curr = read_bus_curr_low_pass_ma();
-            build_analog_data_msg(millis(), SENSOR_BUS_CURR, bus_curr, &msg);
-            txb_enqueue(&msg);
-            if (bus_curr > BUS_WARNING_MA) {
-                status_ok = false;
-                data[0] = (bus_curr >> 8) & 0xff;
-                data[1] = (bus_curr >> 0) & 0xff;
-                build_board_stat_msg(millis(), E_BUS_OVER_CURRENT, data, 2, &msg);
-                txb_enqueue(&msg);
-            }
-            if (status_ok) {
-                build_board_stat_msg(millis(), E_NOMINAL, NULL, 0, &msg);
-                txb_enqueue(&msg);
-            }
-            
-            // control bus power
-            // first check if we just got asked to power down (ticks_until idles at zero)
-            if (bus_powered && !req_bus_powered && ticks_until_power_down == 0) {
-                // If so, send the power down warning and then start our countdown to power off
-                can_msg_t msg;
-                build_general_cmd_msg(millis(), BUS_DOWN_WARNING, &msg);
-                txb_enqueue(&msg);
-                ticks_until_power_down = CYCLES_TILL_POWER_DOWN;
-            } else if (bus_powered && !req_bus_powered && ticks_until_power_down > 0) {
-                // If we are currently counting down to a power off, keep counting
-                ticks_until_power_down--;
-                // and actually shut off power if we are done counting
-                if (ticks_until_power_down == 0) {
-                    bus_powered = false;
-                }
-            } else if (req_bus_powered) {
-                // If we get were last asked to turn on just do it. Yes this will get called
-                // every iteration we are powered, no it doesn't matter.
-                bus_powered = true;
-                ticks_until_power_down = 0;
-            }
-            SET_BUS_POWER(bus_powered);
         }
-        
+
         if (millis() - last_sensor_millis > MAX_SENSOR_TIME_DIFF_ms) {
             update_sensor_low_pass();
         }
         
-        while (uart_byte_available())
-        {
+        while (uart_byte_available()) {
             radio_handle_input_character(uart_read_byte());
+            last_radio_message_millis = millis();
         }
         
-        if (!rcvb_is_empty())
-        {
+        // reset radio if no message received for over 1 minute
+        if (millis() - last_radio_message_millis > RESET_RADIO_ms){
+            // reset radio
+            SET_RADIO_POWER(0);
+            uint32_t wait = millis();
+            // send error msg
+            can_msg_t msg;
+            uint8_t error_data[2] = {0,0};
+            build_board_stat_msg(millis(), E_RADIO_SIGNAL_LOST, error_data, 2, &msg);
+            txb_enqueue(&msg);
+            // wait for 50 ms
+            while (millis() - wait < 50);    
+            SET_RADIO_POWER(1);
+            last_radio_message_millis = millis();
+        }
+
+        if (!rcvb_is_empty()) {
             can_msg_t msg;
             rcvb_pop_message(&msg);
             serialize_can_msg(&msg);
         }
-        
+
         //send any queued CAN messages
         txb_heartbeat();
     }
 }
 
 uint8_t high_fq_data_counter = 0;
+
 static void can_msg_handler(const can_msg_t *msg) {
+    seen_can_message = true;
     uint16_t msg_type = get_message_type(msg);
-    
+
     // A little hacky, but convenient way to filter out the high speed stuff 
     //(not including altitude cause we need that)
-    if (msg_type >= MSG_SENSOR_ACC && msg_type <= MSG_SENSOR_MAG){
+    if (msg_type >= MSG_SENSOR_ACC && msg_type <= MSG_SENSOR_MAG) {
         //while we want to discard most of the messages, we want to send them once in a while to alow checking that everything is alive
         // we use a prime number to avoid aliasing ensure that every message gets a chance to be sent
         high_fq_data_counter++;
@@ -177,26 +162,27 @@ static void can_msg_handler(const can_msg_t *msg) {
             high_fq_data_counter = 0;
             rcvb_push_message(msg);
         }
+    } else {
+        rcvb_push_message(msg);
     }
-    else {
-        // Don't send the message over uart if the bus is down and it's not from us
-        if (get_board_unique_id(msg) == BOARD_UNIQUE_ID || bus_powered) {
-            // Send the message over UART
-            rcvb_push_message(msg);
-        }
-    }
-    
+
     // ignore messages that were sent from this board
     if (get_board_unique_id(msg) == BOARD_UNIQUE_ID) {
         return;
     }
-    
+
     int dest_id = -1;
 
     switch (msg_type) {
         case MSG_ACTUATOR_CMD:
-            if (get_actuator_id(msg) == CANBUS) {
-                req_bus_powered = get_req_actuator_state(msg) == ACTUATOR_CLOSED;
+            if (get_actuator_id(msg) == ACTUATOR_RADIO) {
+                if (get_req_actuator_state(msg) == ACTUATOR_OFF) {
+                    SET_RADIO_POWER(false);
+                }
+                else if (get_req_actuator_state(msg) == ACTUATOR_ON) {
+                    seen_radio_message = true;
+                    SET_RADIO_POWER(true);
+                }
             }
             break;
 
@@ -211,15 +197,15 @@ static void can_msg_handler(const can_msg_t *msg) {
             BLUE_LED_SET(false);
             WHITE_LED_SET(false);
             break;
-        
+
         case MSG_RESET_CMD:
             dest_id = get_reset_board_id(msg);
-            if (dest_id == BOARD_UNIQUE_ID || dest_id == 0 ){
+            if (dest_id == BOARD_UNIQUE_ID || dest_id == 0) {
                 RESET();
             }
             break;
 
-        // all the other ones - do nothing
+            // all the other ones - do nothing
         default:
             break;
     }

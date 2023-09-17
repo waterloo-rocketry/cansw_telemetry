@@ -61,13 +61,13 @@
     <conf name="default" type="2">
       <toolsSet>
         <developmentServer>localhost</developmentServer>
-        <targetDevice>PIC18LF26K83</targetDevice>
+        <targetDevice>PIC18F26K83</targetDevice>
         <targetHeader></targetHeader>
         <targetPluginBoard></targetPluginBoard>
-        <platformTool>snap</platformTool>
+        <platformTool>PICkit3PlatformTool</platformTool>
         <languageToolchain>XC8</languageToolchain>
-        <languageToolchainVersion>2.31</languageToolchainVersion>
-        <platform>3</platform>
+        <languageToolchainVersion>2.36</languageToolchainVersion>
+        <platform>2</platform>
       </toolsSet>
       <packs>
         <pack name="PIC18F-K_DFP" vendor="Microchip" version="1.5.114"/>
@@ -105,7 +105,7 @@
         <property key="call-prologues" value="false"/>
         <property key="default-bitfield-type" value="true"/>
         <property key="default-char-type" value="true"/>
-        <property key="define-macros" value="BOARD_UNIQUE_ID=BOARD_ID_RADIO"/>
+        <property key="define-macros" value="BOARD_UNIQUE_ID=BOARD_ID_TELEMETRY"/>
         <property key="disable-optimizations" value="true"/>
         <property key="extra-include-directories" value="canlib"/>
         <property key="favor-optimization-for" value="-speed,+space"/>
@@ -221,7 +221,7 @@
         <property key="programoptions.testmodeentrymethod" value="VDDFirst"/>
         <property key="programoptions.usehighvoltageonmclr" value="false"/>
         <property key="programoptions.uselvpprogramming" value="false"/>
-        <property key="voltagevalue" value="3.375"/>
+        <property key="voltagevalue" value="5.0"/>
       </PICkit3PlatformTool>
       <Tool>
         <property key="AutoSelectMemRanges" value="auto"/>
@@ -265,7 +265,7 @@
         <property key="programoptions.testmodeentrymethod" value="VDDFirst"/>
         <property key="programoptions.usehighvoltageonmclr" value="false"/>
         <property key="programoptions.uselvpprogramming" value="false"/>
-        <property key="voltagevalue" value="3.375"/>
+        <property key="voltagevalue" value="5.0"/>
       </Tool>
       <XC8-CO>
         <property key="coverage-enable" value=""/>
@@ -286,6 +286,11 @@
         <property key="user-pack-device-support" value=""/>
         <property key="wpo-lto" value="false"/>
       </XC8-config-global>
+      <snap>
+        <property key="memories.programmemory.ranges" value="0-ffff"/>
+        <property key="programmerToGoFilePath"
+                  value="/home/rio/code/rocketry/cansw_telemetry/ltt_test/debug/default/default_ptg"/>
+      </snap>
     </conf>
   </confs>
 </configurationDescriptor>
