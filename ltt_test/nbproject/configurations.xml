@@ -221,7 +221,7 @@
         <property key="programoptions.testmodeentrymethod" value="VDDFirst"/>
         <property key="programoptions.usehighvoltageonmclr" value="false"/>
         <property key="programoptions.uselvpprogramming" value="false"/>
-        <property key="voltagevalue" value="5.0"/>
+        <property key="voltagevalue" value="3.25"/>
       </PICkit3PlatformTool>
       <Tool>
         <property key="AutoSelectMemRanges" value="auto"/>
@@ -265,7 +265,7 @@
         <property key="programoptions.testmodeentrymethod" value="VDDFirst"/>
         <property key="programoptions.usehighvoltageonmclr" value="false"/>
         <property key="programoptions.uselvpprogramming" value="false"/>
-        <property key="voltagevalue" value="5.0"/>
+        <property key="voltagevalue" value="3.25"/>
       </Tool>
       <XC8-CO>
         <property key="coverage-enable" value=""/>
